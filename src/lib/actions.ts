@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase-client';
+import { getDb } from '@/firebase/server-init';
 import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
 
@@ -21,6 +21,7 @@ const perfumeSchema = z.object({
   imageUrl: z.string().url().optional().or(z.literal('')),
 });
 
+const db = getDb();
 const perfumesCollection = collection(db, 'perfumes');
 
 export async function getPerfumes(): Promise<Perfume[]> {

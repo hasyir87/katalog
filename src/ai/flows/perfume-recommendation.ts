@@ -4,36 +4,11 @@
  * @fileOverview A perfume recommendation AI agent.
  *
  * - recommendPerfume - A function that handles the perfume recommendation process.
- * - RecommendPerfumeInput - The input type for the recommendPerfume function.
- * - RecommendPerfumeOutput - The return type for the recommendPerfume function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-
-const RecommendPerfumeInputSchema = z.object({
-  query: z.string().describe('The user query to find perfumes based on preference.'),
-});
-export type RecommendPerfumeInput = z.infer<typeof RecommendPerfumeInputSchema>;
-
-const PerfumeSchema = z.object({
-  Number: z.number(),
-  Nama_Parfum: z.string(),
-  Deskripsi_Parfum: z.string(),
-  Top_Notes: z.string(),
-  Middle_Notes: z.string(),
-  Base_Notes: z.string(),
-  Penggunaan: z.string(),
-  Sex: z.string(),
-  Lokasi: z.string(),
-  Jenis_Aroma: z.string(),
-  Kualitas: z.string(),
-});
-
-const RecommendPerfumeOutputSchema = z.object({
-  recommendations: z.array(PerfumeSchema).describe('An array of recommended perfumes based on the user query.'),
-});
-export type RecommendPerfumeOutput = z.infer<typeof RecommendPerfumeOutputSchema>;
+import { RecommendPerfumeInputSchema, RecommendPerfumeOutputSchema, PerfumeSchema, type RecommendPerfumeInput, type RecommendPerfumeOutput } from '@/ai/schema/perfume-recommendation-schema';
 
 
 const getRelevantPerfumes = ai.defineTool({
@@ -46,7 +21,7 @@ const getRelevantPerfumes = ai.defineTool({
 }, async (input) => {
   // TODO: Implement the database retrieval logic here
   // Replace this with actual data retrieval from the database
-  const mockPerfumes: PerfumeSchema[] = [
+  const mockPerfumes: z.infer<typeof PerfumeSchema>[] = [
     {
       Number: 1,
       Nama_Parfum: 'Rose Delight',

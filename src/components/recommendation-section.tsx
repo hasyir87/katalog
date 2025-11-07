@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { PerfumeCard } from '@/components/perfume-card';
 import { Wand2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { RecommendPerfumeOutput } from '@/ai/flows/perfume-recommendation';
+import type { RecommendPerfumeOutput } from '@/ai/schema/perfume-recommendation-schema';
 
 
 const FormSchema = z.object({
