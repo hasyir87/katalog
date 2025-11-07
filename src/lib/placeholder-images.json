@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "1",
+      "description": "A delicate perfume bottle with a soft pink hue.",
+      "imageUrl": "https://images.unsplash.com/photo-1585218334450-afcf929da36e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwZXJmdW1lJTIwYm90dGxlfGVufDB8fHx8MTc2MjQyMDk2NHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume bottle"
+    },
+    {
+      "id": "2",
+      "description": "A bold, geometric perfume bottle against a dark background.",
+      "imageUrl": "https://images.unsplash.com/photo-1757313202626-8b763ce254a1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8ZnJhZ3JhbmNlJTIwcHJvZHVjdHxlbnwwfHx8fDE3NjI0NzM0Mjd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fragrance product"
+    },
+    {
+      "id": "3",
+      "description": "An elegant perfume bottle with golden accents.",
+      "imageUrl": "https://images.unsplash.com/photo-1719176010035-17729577d496?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxsdXh1cnklMjBzY2VudHxlbnwwfHx8fDE3NjI1MjE5MjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "luxury scent"
+    },
+    {
+      "id": "4",
+      "description": "A minimalist perfume bottle with a clean design.",
+      "imageUrl": "https://images.unsplash.com/photo-1630527944112-4cd7a3c11a55?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxwZXJmdW1lJTIwYXJvbWF8ZW58MHx8fHwxNzYyNTIxOTI1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume aroma"
+    },
+    {
+      "id": "5",
+      "description": "A vintage-style perfume bottle with intricate details.",
+      "imageUrl": "https://images.unsplash.com/photo-1759793499819-bf60128a54b4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjbGFzc2ljJTIwZnJhZ3JhbmNlfGVufDB8fHx8MTc2MjUyMTkyNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "classic fragrance"
+    },
+    {
+      "id": "6",
+      "description": "A modern perfume bottle with a unique shape.",
+      "imageUrl": "https://images.unsplash.com/photo-1761865544944-2c8da85c869e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBwZXJmdW1lfGVufDB8fHx8MTc2MjUyMTkyNXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "modern perfume"
+    }
+  ]
 }
