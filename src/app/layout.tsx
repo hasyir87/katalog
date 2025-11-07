@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { AuthProvider } from '@/components/auth-provider';
+import { FirebaseClientProvider } from '@/firebase';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import { AuthProvider } from '@/components/auth-provider';
 
 export const metadata: Metadata = {
   title: 'ScentVault',
@@ -24,12 +25,14 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body className={cn("font-body antialiased min-h-screen flex flex-col")}>
-        <AuthProvider>
-          <Header />
-          <div className="flex-grow">{children}</div>
-          <Footer />
-          <Toaster />
-        </AuthProvider>
+        <FirebaseClientProvider>
+          <AuthProvider>
+            <Header />
+            <div className="flex-grow">{children}</div>
+            <Footer />
+            <Toaster />
+          </AuthProvider>
+        </FirebaseClientProvider>
       </body>
     </html>
   );

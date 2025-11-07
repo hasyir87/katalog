@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { SprayCan, LogOut, LayoutDashboard, User as UserIcon } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useUser, useAuth as useFirebaseAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -13,12 +13,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { auth } from '@/lib/firebase-client';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 
 export function Header() {
-  const { user } = useAuth();
+  const { user } = useUser();
+  const auth = useFirebaseAuth();
   const router = useRouter();
 
   const handleSignOut = async () => {

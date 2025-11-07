@@ -1,31 +1,12 @@
 'use client';
 
-import type { User } from 'firebase/auth';
-import { onAuthStateChanged } from 'firebase/auth';
-import type { ReactNode } from 'react';
-import { createContext, useEffect, useState } from 'react';
-import { auth } from '@/lib/firebase-client';
+import { ReactNode } from 'react';
+import { useUser } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
-
-type AuthContextType = {
-  user: User | null;
-  loading: boolean;
-};
-
-export const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
+import {AuthContext} from '@/hooks/use-auth'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
+  const { user, isUserLoading: loading } = useUser();
 
   if (loading) {
     return (

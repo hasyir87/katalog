@@ -3,8 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '@/lib/firebase-client';
-import { useAuth } from '@/hooks/use-auth';
+import { useUser, useAuth as useFirebaseAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
@@ -17,13 +16,14 @@ const GoogleIcon = () => (
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, isUserLoading } = useUser();
+  const auth = useFirebaseAuth();
 
   useEffect(() => {
-    if (!loading && user) {
+    if (!isUserLoading && user) {
       router.push('/dashboard');
     }
-  }, [user, loading, router]);
+  }, [user, isUserLoading, router]);
 
   const handleSignIn = async () => {
     const provider = new GoogleAuthProvider();
@@ -35,7 +35,7 @@ export default function LoginPage() {
     }
   };
   
-  if (loading || user) {
+  if (isUserLoading || user) {
       return <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]"><div>Loading...</div></div>;
   }
 
