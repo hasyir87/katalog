@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { getPerfumeById } from '@/lib/actions';
+import { getPerfumeById, getPerfumes } from '@/lib/actions';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';

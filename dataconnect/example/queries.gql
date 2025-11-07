@@ -1,0 +1,33 @@
+mutation CreateUser @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  user_insert(data: {
+    id_expr: "uuidV4()",
+    displayName: "New User",
+    createdAt_expr: "request.time"
+  })
+}
+
+query ListCatalogs @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  catalogs {
+    id
+    name
+    description
+  }
+}
+
+mutation UpdateItemQuantity($id: UUID!, $quantity: Int!) @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  item_update(
+    id: $id,
+    data: {
+      quantity: $quantity
+    }
+  )
+}
+
+query GetItemsInCategory($categoryId: UUID!) @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  items(where: {categoryId: {eq: $categoryId}}) {
+    id
+    name
+    description
+    quantity
+  }
+}

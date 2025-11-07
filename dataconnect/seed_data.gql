@@ -1,0 +1,32 @@
+mutation CreateSeedData @transaction @auth(level: PUBLIC, insecureReason: "This operation is used to populate the database with seed data and is safe to expose to the public.") {
+  # Example: Inserting data into a hypothetical Movie table
+  movie_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      title: "Inception",
+      imageUrl: "https://example.com/inception.jpg",
+      genre: "sci-fi",
+      rating: 8.8
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      title: "The Matrix",
+      imageUrl: "https://example.com/matrix.jpg",
+      genre: "action",
+      rating: 9.3
+    }
+  ])
+  # Example: Inserting data into a hypothetical User table
+  user_insertMany(data: [
+    {
+      id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      username: "johndoe",
+      email: "john.doe@example.com"
+    },
+    {
+      id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      username: "janedoe",
+      email: "jane.doe@example.com"
+    }
+  ])
+}

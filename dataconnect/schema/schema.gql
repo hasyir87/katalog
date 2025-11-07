@@ -1,0 +1,31 @@
+type User @table {
+  displayName: String!
+  createdAt: Timestamp!
+  email: String
+  photoUrl: String
+}
+
+type Catalog @table {
+  user: User!
+  name: String!
+  createdAt: Timestamp!
+  description: String
+}
+
+type Category @table {
+  catalog: Catalog!
+  name: String!
+  createdAt: Timestamp!
+  description: String
+}
+
+type Item @table {
+  catalog: Catalog!
+  category: Category
+  name: String!
+  createdAt: Timestamp!
+  description: String
+  imageUrl: String
+  quantity: Int
+  notes: String
+}
