@@ -1,0 +1,141 @@
+{
+  "entities": {
+    "Perfume": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Perfume",
+      "type": "object",
+      "description": "Represents a perfume product with its attributes.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Perfume entity."
+        },
+        "number": {
+          "type": "string",
+          "description": "The perfume's number or code."
+        },
+        "namaParfum": {
+          "type": "string",
+          "description": "The name of the perfume."
+        },
+        "deskripsiParfum": {
+          "type": "string",
+          "description": "A detailed description of the perfume."
+        },
+        "topNotes": {
+          "type": "string",
+          "description": "The top notes of the perfume."
+        },
+        "middleNotes": {
+          "type": "string",
+          "description": "The middle notes of the perfume."
+        },
+        "baseNotes": {
+          "type": "string",
+          "description": "The base notes of the perfume."
+        },
+        "penggunaan": {
+          "type": "string",
+          "description": "The recommended usage or occasion for the perfume."
+        },
+        "sex": {
+          "type": "string",
+          "description": "The target gender or sex for the perfume."
+        },
+        "lokasi": {
+          "type": "string",
+          "description": "The location or origin of the perfume."
+        },
+        "jenisAromaId": {
+          "type": "string",
+          "description": "Reference to JenisAroma. (Relationship: JenisAroma 1:N Perfume)"
+        },
+        "kualitas": {
+          "type": "string",
+          "description": "The perceived quality or rating of the perfume."
+        }
+      },
+      "required": [
+        "id",
+        "namaParfum",
+        "deskripsiParfum",
+        "topNotes",
+        "middleNotes",
+        "baseNotes",
+        "penggunaan",
+        "sex",
+        "lokasi",
+        "jenisAromaId",
+        "kualitas"
+      ]
+    },
+    "JenisAroma": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "JenisAroma",
+      "type": "object",
+      "description": "Represents a scent category or type.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the JenisAroma entity."
+        },
+        "nama": {
+          "type": "string",
+          "description": "The name of the scent type (e.g., Floral, Woody)."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the scent type."
+        }
+      },
+      "required": [
+        "id",
+        "nama",
+        "description"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/jenisAromas/{jenisAromaId}",
+        "definition": {
+          "entityName": "JenisAroma",
+          "schema": {
+            "$ref": "#/backend/entities/JenisAroma"
+          },
+          "description": "Collection of scent categories. Accessible publicly for read operations.",
+          "params": [
+            {
+              "name": "jenisAromaId",
+              "description": "Unique identifier for each scent category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/perfumes/{perfumeId}",
+        "definition": {
+          "entityName": "Perfume",
+          "schema": {
+            "$ref": "#/backend/entities/Perfume"
+          },
+          "description": "Collection of perfume data entries. Write access restricted to authenticated users.",
+          "params": [
+            {
+              "name": "perfumeId",
+              "description": "Unique identifier for each perfume entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This design prioritizes security and scalability for the ScentVault application.  It separates public read access from authenticated write access to perfume data and uses a straightforward structure for scent categories. The structure ensures Authorization Independence and supports QAPs. \n\n**Authorization Independence:** The design avoids `get()` calls in security rules by not relying on hierarchical authorization. All necessary data for authorization is contained within each document. For the `perfumes` collection (where authenticated users can create/modify documents), ownership is implicit via authentication (`request.auth.uid`).\n\n**QAPs (Rules are not Filters):**\n*   **Public Catalog View:** The `jenisAromas` collection facilitates public listing because it does not require user-specific authorization rules.\n*   **Authenticated Data Management:** Limiting write access on `perfumes` to authenticated users via `request.auth.uid` prevents unauthorized modifications. Since all documents in `perfumes` require authentication for modification, structural segregation is achieved.\n\nGiven the prompt states that the data will be stored in a SQL database, and this schema describes Firestore, it is assumed that only data relevant to security and access controls will be stored in firestore. Specifically the jenisAroma and the association between users and perfumes.\n\n"
+  }
+}
