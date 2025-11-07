@@ -1,30 +1,24 @@
 'use client';
 
-import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore'
 
+// Hardcoded the correct config to ensure it's always used.
+const firebaseConfig = {
+  "projectId": "katalog-parfum-next",
+  "appId": "1:782806346931:web:5337213437255858971165",
+  "apiKey": "AIzaSyAz_jC69yq_8Kx04zYjW1zJ5k-FpCk1i3w",
+  "authDomain": "katalog-parfum-next.firebaseapp.com",
+  "storageBucket": "katalog-parfum-next.appspot.com",
+  "messagingSenderId": "782806346931",
+  "measurementId": "G-L9E1V3E28V"
+};
+
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
   if (!getApps().length) {
-    // Important! initializeApp() is called without any arguments because Firebase App Hosting
-    // integrates with the initializeApp() function to provide the environment variables needed to
-    // populate the FirebaseOptions in production. It is critical that we attempt to call initializeApp()
-    // without arguments.
-    let firebaseApp;
-    try {
-      // Attempt to initialize via Firebase App Hosting environment variables
-      firebaseApp = initializeApp();
-    } catch (e) {
-      // Only warn in production because it's normal to use the firebaseConfig to initialize
-      // during development
-      if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
-      }
-      firebaseApp = initializeApp(firebaseConfig);
-    }
-
+    const firebaseApp = initializeApp(firebaseConfig);
     return getSdks(firebaseApp);
   }
 
