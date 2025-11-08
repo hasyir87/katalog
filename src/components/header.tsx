@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { SprayCan, LogOut, LayoutDashboard, User as UserIcon } from 'lucide-react';
+import { LogOut, LayoutDashboard, User as UserIcon } from 'lucide-react';
 import { useUser, useAuth as useFirebaseAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export function Header() {
   const { user } = useUser();
@@ -28,12 +29,9 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
+      <div className="container flex h-20 items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2">
-          <SprayCan className="h-6 w-6 text-primary" />
-          <span className="font-bold font-headline sm:inline-block text-lg">
-            ScentVault
-          </span>
+          <Image src="/logo.png" alt="M Perfume Logo" width={100} height={50} className="dark:invert"/>
         </Link>
         <nav className="flex-1 items-center space-x-6 text-sm font-medium hidden md:flex">
           <Link
