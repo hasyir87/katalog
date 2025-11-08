@@ -8,8 +8,8 @@ import { cn } from '@/lib/utils';
 import { AuthProvider } from '@/components/auth-provider';
 
 export const metadata: Metadata = {
-  title: 'ScentVault',
-  description: 'Your personal collection of fine fragrances.',
+  title: 'M Katalog Parfum',
+  description: 'Koleksi parfum pilihan Anda.',
 };
 
 export default function RootLayout({

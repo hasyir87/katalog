@@ -44,16 +44,16 @@ export default function LoginPage() {
       <div className="flex items-center justify-center py-12">
         <Card className="mx-auto max-w-sm w-full">
           <CardHeader className="space-y-2 text-center">
-            <CardTitle className="text-2xl font-headline">Welcome Back</CardTitle>
+            <CardTitle className="text-2xl font-headline">Selamat Datang Kembali</CardTitle>
             <CardDescription>
-              Sign in to manage your ScentVault collection.
+              Masuk untuk mengelola koleksi M Katalog Parfum Anda.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
               <Button variant="outline" className="w-full" onClick={handleSignIn}>
                 <GoogleIcon />
-                Sign in with Google
+                Masuk dengan Google
               </Button>
             </div>
           </CardContent>

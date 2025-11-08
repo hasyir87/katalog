@@ -12,13 +12,13 @@ export default async function DashboardPage() {
         <div className="container mx-auto py-10">
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold font-headline tracking-tight">Perfume Dashboard</h1>
-                    <p className="text-muted-foreground">Manage your ScentVault collection.</p>
+                    <h1 className="text-3xl font-bold font-headline tracking-tight">Dasbor Parfum</h1>
+                    <p className="text-muted-foreground">Kelola koleksi M Katalog Parfum Anda.</p>
                 </div>
                 <Button asChild>
                     <Link href="/dashboard/add">
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        Add New Perfume
+                        Tambah Parfum Baru
                     </Link>
                 </Button>
             </div>

@@ -24,18 +24,18 @@ export default async function Home() {
             <div className="flex flex-col items-center space-y-4 text-center">
               <div className="space-y-2">
                 <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline text-primary">
-                  ScentVault
+                  M Katalog Parfum
                 </h1>
                 <p className="mx-auto max-w-[700px] text-foreground/80 md:text-xl">
-                  Discover, manage, and explore the world of fragrances. Your personal guide to olfactory excellence.
+                  Temukan, kelola, dan jelajahi dunia wewangian. Panduan pribadi Anda menuju keunggulan penciuman.
                 </p>
               </div>
               <div className="space-x-4">
                 <Button asChild size="lg">
-                  <Link href="#catalog">Explore Catalog</Link>
+                  <Link href="#catalog">Jelajahi Katalog</Link>
                 </Button>
                 <Button asChild size="lg" variant="secondary">
-                  <Link href="/dashboard">Manage Vault</Link>
+                  <Link href="/dashboard">Kelola Koleksi</Link>
                 </Button>
               </div>
             </div>
@@ -48,9 +48,9 @@ export default async function Home() {
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">Our Fragrance Catalog</h2>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">Katalog Parfum Kami</h2>
                 <p className="max-w-[900px] text-foreground/80 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Browse our curated collection of exquisite perfumes from around the world.
+                  Telusuri koleksi parfum pilihan kami dari seluruh dunia.
                 </p>
               </div>
             </div>
@@ -62,9 +62,9 @@ export default async function Home() {
               </div>
             ) : (
               <div className="text-center py-12">
-                <p className="text-lg text-muted-foreground">No perfumes in the vault yet.</p>
+                <p className="text-lg text-muted-foreground">Belum ada parfum di dalam koleksi.</p>
                 <Button asChild variant="link" className="mt-2">
-                  <Link href="/dashboard">Add the first one!</Link>
+                  <Link href="/dashboard">Tambahkan yang pertama!</Link>
                 </Button>
               </div>
             )}
