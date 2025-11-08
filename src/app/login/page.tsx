@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { useUser, useAuth as useFirebaseAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
+import { Loader2 } from 'lucide-react';
 
 const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" viewBox="0 0 48 48">
@@ -18,26 +19,45 @@ export default function LoginPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const auth = useFirebaseAuth();
+  const [isSigningIn, setIsSigningIn] = useState(true);
 
   useEffect(() => {
-    if (!isUserLoading && user) {
-      router.push('/dashboard');
-    }
-  }, [user, isUserLoading, router]);
+    if (!auth) return;
+    
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          // User has just been redirected back from Google.
+          router.push('/dashboard');
+        } else {
+          // This is a normal page load.
+          if (!isUserLoading && user) {
+            router.push('/dashboard');
+          }
+        }
+      })
+      .catch((error) => {
+        console.error('Error getting redirect result', error);
+      })
+      .finally(() => {
+         setIsSigningIn(false);
+      });
+  }, [auth, user, isUserLoading, router]);
 
   const handleSignIn = async () => {
     if (!auth) return;
+    setIsSigningIn(true);
     const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
-    } catch (error) {
-      console.error('Error signing in with Google', error);
-    }
+    await signInWithRedirect(auth, provider);
   };
   
-  if (isUserLoading || user) {
-      return <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]"><div>Loading...</div></div>;
+  if (isUserLoading || isSigningIn || user) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Mempersiapkan sesi Anda...</p>
+        </div>
+      );
   }
 
   return (
@@ -52,8 +72,12 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
-              <Button variant="outline" className="w-full" onClick={handleSignIn}>
-                <GoogleIcon />
+              <Button variant="outline" className="w-full" onClick={handleSignIn} disabled={isSigningIn}>
+                {isSigningIn ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                    <GoogleIcon />
+                )}
                 Masuk dengan Google
               </Button>
             </div>
