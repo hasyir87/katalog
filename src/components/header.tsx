@@ -16,13 +16,15 @@ import {
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { Skeleton } from './ui/skeleton';
 
 export function Header() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const auth = useFirebaseAuth();
   const router = useRouter();
 
   const handleSignOut = async () => {
+    if (!auth) return;
     await signOut(auth);
     router.push('/');
   };
@@ -48,7 +50,9 @@ export function Header() {
           </Link>
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
-          {user ? (
+          {isUserLoading ? (
+             <Skeleton className="h-10 w-10 rounded-full" />
+          ) : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">

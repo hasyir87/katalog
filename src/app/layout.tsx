@@ -5,7 +5,6 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
-import { AuthProvider } from '@/components/auth-provider';
 
 export const metadata: Metadata = {
   title: 'M Katalog Parfum',
@@ -26,12 +25,10 @@ export default function RootLayout({
       </head>
       <body className={cn("font-body antialiased min-h-screen flex flex-col")}>
         <FirebaseClientProvider>
-          <AuthProvider>
             <Header />
             <div className="flex-grow">{children}</div>
             <Footer />
             <Toaster />
-          </AuthProvider>
         </FirebaseClientProvider>
       </body>
     </html>
