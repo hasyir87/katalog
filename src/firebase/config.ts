@@ -1,7 +1,7 @@
 export const firebaseConfig = {
   "projectId": "katalog-parfum-next",
-  "appId": "1:782806346931:web:5337213437255858971165",
-  "apiKey": "AIzaSyAz_jC69yq_8Kx04zYjW1zJ5k-FpCk1i3w",
+  "appId": "1:782806346931:web:3626c117d63d8985971165",
+  "apiKey": "AIzaSyDF1hA3aU8a-3g_R5B123-kMv2JjBw-4C4",
   "authDomain": "katalog-parfum-next.firebaseapp.com",
   "storageBucket": "katalog-parfum-next.appspot.com",
   "messagingSenderId": "782806346931",
