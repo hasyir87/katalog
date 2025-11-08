@@ -9,9 +9,7 @@ export function Footer() {
           <Link href="/" className="flex items-center space-x-2">
             <Image src="/Logo.png" alt="M Perfume Logo" width={80} height={40} className="dark:invert"/>
           </Link>
-          <p className="text-center text-sm leading-loose md:text-left text-muted-foreground">
-            Dibuat oleh AI ramah lingkungan Anda.
-          </p>
+          
         </div>
         <p className="text-center text-sm text-muted-foreground">
             © {new Date().getFullYear()} M Katalog Parfum. Semua hak dilindungi.
