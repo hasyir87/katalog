@@ -1,5 +1,5 @@
 'use server';
-import { initializeApp, getApps, getApp, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 // When deployed to Firebase App Hosting, the service account credentials
@@ -12,4 +12,6 @@ if (!getApps().length) {
 const adminApp = getApp();
 const db = getFirestore(adminApp);
 
-export { db as getDb };
+export async function getDb() {
+    return db;
+};

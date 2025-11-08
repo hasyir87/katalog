@@ -21,11 +21,15 @@ const perfumeSchema = z.object({
   imageUrl: z.string().url().optional().or(z.literal('')),
 });
 
-const db = getDb();
-const perfumesCollection = collection(db, 'perfumes');
+
+async function getPerfumesCollection() {
+    const db = await getDb();
+    return collection(db, 'perfumes');
+}
 
 export async function getPerfumes(): Promise<Perfume[]> {
   try {
+    const perfumesCollection = await getPerfumesCollection();
     const snapshot = await getDocs(perfumesCollection);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
   } catch (error) {
@@ -38,6 +42,7 @@ export async function getPerfumes(): Promise<Perfume[]> {
 
 export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
   try {
+    const db = await getDb();
     const docRef = doc(db, 'perfumes', id);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
@@ -52,6 +57,7 @@ export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
 
 export async function getPerfumesByAroma(aroma: string): Promise<Perfume[]> {
     try {
+        const perfumesCollection = await getPerfumesCollection();
         const q = query(perfumesCollection, where("jenisAroma", "==", aroma));
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
@@ -65,6 +71,7 @@ export async function getPerfumesByAroma(aroma: string): Promise<Perfume[]> {
 export async function addPerfume(data: Omit<Perfume, 'id'>) {
   const validatedData = perfumeSchema.parse(data);
   try {
+    const perfumesCollection = await getPerfumesCollection();
     const docRef = await addDoc(perfumesCollection, validatedData);
     revalidatePath('/');
     revalidatePath('/dashboard');
@@ -77,6 +84,7 @@ export async function addPerfume(data: Omit<Perfume, 'id'>) {
 
 export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'>>) {
   const validatedData = perfumeSchema.partial().parse(data);
+  const db = await getDb();
   const docRef = doc(db, 'perfumes', id);
   try {
     await updateDoc(docRef, validatedData);
@@ -93,6 +101,7 @@ export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'
 }
 
 export async function deletePerfume(id: string) {
+  const db = await getDb();
   const docRef = doc(db, 'perfumes', id);
   try {
      // Fetch the document first to get its data for revalidation
