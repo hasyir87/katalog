@@ -19,35 +19,41 @@ export default function LoginPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const auth = useFirebaseAuth();
-  const [isSigningIn, setIsSigningIn] = useState(true);
+  const [isSigningIn, setIsSigningIn] = useState(true); // Start as true to handle redirect
 
   useEffect(() => {
     if (!auth) return;
-    
+
+    // If a user is already authenticated, redirect to dashboard
+    if (!isUserLoading && user) {
+      router.push('/dashboard');
+      return;
+    }
+
+    // Process the redirect result from Google
     getRedirectResult(auth)
       .then((result) => {
         if (result) {
-          // User has just been redirected back from Google.
-          router.push('/dashboard');
+          // User has just signed in via redirect.
+          // The `user` object will soon be populated by the global state listener.
+          // The redirect to '/dashboard' will be handled by the next part of this effect.
         } else {
-          // This is a normal page load.
-          if (!isUserLoading && user) {
-            router.push('/dashboard');
-          }
+          // No redirect result, probably a direct navigation.
+          setIsSigningIn(false);
         }
       })
       .catch((error) => {
         console.error('Error getting redirect result', error);
-      })
-      .finally(() => {
-         setIsSigningIn(false);
+        setIsSigningIn(false);
       });
+      
   }, [auth, user, isUserLoading, router]);
 
   const handleSignIn = async () => {
     if (!auth) return;
     setIsSigningIn(true);
     const provider = new GoogleAuthProvider();
+    // Use signInWithRedirect for a more robust flow
     await signInWithRedirect(auth, provider);
   };
   
@@ -73,11 +79,7 @@ export default function LoginPage() {
           <CardContent>
             <div className="grid gap-4">
               <Button variant="outline" className="w-full" onClick={handleSignIn} disabled={isSigningIn}>
-                {isSigningIn ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                    <GoogleIcon />
-                )}
+                <GoogleIcon />
                 Masuk dengan Google
               </Button>
             </div>
