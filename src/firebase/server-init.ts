@@ -1,12 +1,20 @@
 'use server';
-import { initializeApp, getApps, getApp } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp, ServiceAccount, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
-// When deployed to Firebase App Hosting, the service account credentials
-// are automatically available in the environment. We don't need to pass them manually.
-// initializeApp() will automatically pick them up.
+function getServiceAccount(): ServiceAccount | undefined {
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+        return JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    }
+    return undefined;
+}
+
+
 if (!getApps().length) {
-  initializeApp();
+    const serviceAccount = getServiceAccount();
+    initializeApp({
+        credential: serviceAccount ? cert(serviceAccount) : undefined,
+    });
 }
 
 const adminApp = getApp();
