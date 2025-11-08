@@ -24,7 +24,7 @@ function getServiceAccount(): ServiceAccount | undefined {
 if (getApps().length === 0) {
     const serviceAccount = getServiceAccount();
     // Only initialize if a valid service account is found
-    if (serviceAccount && serviceAccount.project_id) {
+    if (serviceAccount && serviceAccount.projectId) {
         initializeApp({
             credential: cert(serviceAccount),
         });
