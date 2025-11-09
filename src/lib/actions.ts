@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, setDoc } from 'firebase/firestore';
-import { db } from '@/firebase/server-init';
+import { getDb } from '@/firebase/server-init';
 import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
 import type { User } from 'firebase/auth';
@@ -34,6 +34,7 @@ export async function getOrCreateUser(user: User) {
     throw new Error("You are not authorized to access this application.");
   }
   
+  const db = await getDb();
   const userRef = doc(db, 'users', user.uid);
   const docSnap = await getDoc(userRef);
 
@@ -60,10 +61,10 @@ export async function getOrCreateUser(user: User) {
 
 // --- Perfume Actions ---
 
-const perfumesCollection = collection(db, 'perfumes');
-
 export async function getPerfumes(): Promise<Perfume[]> {
   try {
+    const db = await getDb();
+    const perfumesCollection = collection(db, 'perfumes');
     const snapshot = await getDocs(perfumesCollection);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
   } catch (error) {
@@ -74,6 +75,7 @@ export async function getPerfumes(): Promise<Perfume[]> {
 
 export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
   try {
+    const db = await getDb();
     const docRef = doc(db, 'perfumes', id);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
@@ -88,6 +90,8 @@ export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
 
 export async function getPerfumesByAroma(aroma: string): Promise<Perfume[]> {
     try {
+        const db = await getDb();
+        const perfumesCollection = collection(db, 'perfumes');
         const q = query(perfumesCollection, where("jenisAroma", "==", aroma));
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
@@ -101,6 +105,8 @@ export async function getPerfumesByAroma(aroma: string): Promise<Perfume[]> {
 export async function addPerfume(data: Omit<Perfume, 'id'>) {
   const validatedData = perfumeSchema.parse(data);
   try {
+    const db = await getDb();
+    const perfumesCollection = collection(db, 'perfumes');
     const docRef = await addDoc(perfumesCollection, validatedData);
     revalidatePath('/');
     revalidatePath('/dashboard');
@@ -113,6 +119,7 @@ export async function addPerfume(data: Omit<Perfume, 'id'>) {
 
 export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'>>) {
   const validatedData = perfumeSchema.partial().parse(data);
+  const db = await getDb();
   const docRef = doc(db, 'perfumes', id);
   try {
     await updateDoc(docRef, validatedData);
@@ -129,6 +136,7 @@ export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'
 }
 
 export async function deletePerfume(id: string) {
+  const db = await getDb();
   const docRef = doc(db, 'perfumes', id);
   try {
     const docSnap = await getDoc(docRef);

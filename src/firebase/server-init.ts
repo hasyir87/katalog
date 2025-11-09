@@ -1,7 +1,7 @@
 'use server';
 
 import { initializeApp, getApps, getApp, ServiceAccount, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, Firestore } from 'firebase-admin/firestore';
 
 // This function is carefully designed to work in both local and deployed environments.
 function getServiceAccount(): ServiceAccount | undefined {
@@ -28,26 +28,31 @@ function getServiceAccount(): ServiceAccount | undefined {
     }
 }
 
-let db: ReturnType<typeof getFirestore>;
+let db: Firestore;
 
-function initializeAdminApp() {
-    // Ensure this only runs once.
-    if (getApps().length > 0) {
-        return getApp();
+function initializeDb() {
+    if (db) {
+        return;
     }
-
-    const serviceAccount = getServiceAccount();
-    
-    const options = serviceAccount 
-        ? { credential: cert(serviceAccount) } 
-        : {}; // For deployed environments, the SDK will auto-discover credentials.
-
-    return initializeApp(options);
+    // Ensure this only runs once.
+    if (getApps().length === 0) {
+        const serviceAccount = getServiceAccount();
+        const options = serviceAccount 
+            ? { credential: cert(serviceAccount) } 
+            : {}; // For deployed environments, the SDK will auto-discover credentials.
+        const adminApp = initializeApp(options);
+        db = getFirestore(adminApp);
+    } else {
+        db = getFirestore(getApp());
+    }
 }
 
-// Initialize the app and the database connection.
-const adminApp = initializeAdminApp();
-db = getFirestore(adminApp);
+// Initialize the database connection when the module is first loaded.
+initializeDb();
 
-// Export the initialized database instance for use in server actions.
-export { db };
+// Export a function that returns the initialized database instance.
+// This is the correct way to expose a value from a 'use server' file.
+export async function getDb() {
+    // This function must be async to be a valid Server Action.
+    return db;
+}
