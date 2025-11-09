@@ -17,68 +17,58 @@ export default function DashboardLayout({
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  
-  // Combine loading and verifying state
-  const [isLoading, setIsLoading] = useState(true);
+
+  const [isVerifying, setIsVerifying] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    // If Firebase Auth is still loading, wait.
+    // If auth is still loading, do nothing yet.
     if (isUserLoading) {
-      return; 
+      return;
     }
 
-    // If no user is logged in, redirect to login page.
+    // If there's no user and we are done verifying, redirect to login.
     if (!user) {
+      setIsVerifying(false);
       router.replace('/login');
       return;
     }
-    
-    let isMounted = true; // Prevent state updates on unmounted component
 
-    // User is logged in, now verify if they are in the allowlist.
-    const verifyUser = async () => {
-      try {
-        await getOrCreateUser(user);
-        // If the above promise resolves, the user is authorized.
-        if (isMounted) {
+    // If we have a user, but we are still in the verification process.
+    if (user && isVerifying) {
+      const verifyUser = async () => {
+        try {
+          await getOrCreateUser(user);
+          // If the above line doesn't throw, the user is authorized.
           setIsAuthorized(true);
-          setIsLoading(false);
-        }
-      } catch (error: any) {
-        // If it rejects, the user is not authorized.
-        console.error("Authorization Error:", error.message);
-        toast({
-          variant: "destructive",
-          title: "Akses Ditolak",
-          description: "Anda tidak memiliki izin untuk mengakses halaman ini.",
-        });
-
-        if (isMounted) {
+        } catch (error: any) {
+          // If it throws, the user is not in the allowlist.
+          console.error("Authorization Error:", error.message);
+          toast({
+            variant: "destructive",
+            title: "Akses Ditolak",
+            description: "Anda tidak memiliki izin untuk mengakses halaman ini.",
+          });
           setIsAuthorized(false);
-          // Don't set isLoading to false yet, show a redirecting message.
+          // Sign out the unauthorized user and redirect.
+          if (auth) {
+            await signOut(auth);
+          }
+          // The onAuthStateChanged listener will handle the redirect to /login
+          // by setting user to null, which is caught at the top of this useEffect.
+        } finally {
+          // IMPORTANT: Mark verification as complete to prevent re-running this logic.
+          setIsVerifying(false);
         }
-        
-        // Sign out the unauthorized user and redirect.
-        if (auth) {
-          await signOut(auth);
-        }
-        // Redirect after sign-out is complete
-        router.replace('/login');
-      }
-    };
+      };
 
-    verifyUser();
+      verifyUser();
+    }
 
-    return () => {
-      isMounted = false;
-    };
-  // We only want this to run when the user's loading status changes.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isUserLoading, user]);
+  }, [user, isUserLoading, isVerifying, auth, router, toast]);
 
-
-  if (isLoading) {
+  // Show a loading screen while auth state is loading or verification is in progress.
+  if (isUserLoading || isVerifying) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -86,12 +76,14 @@ export default function DashboardLayout({
       </div>
     );
   }
-  
+
+  // If verification is done and the user is authorized, show the dashboard.
   if (isAuthorized) {
-      return <>{children}</>;
+    return <>{children}</>;
   }
 
-  // Fallback while redirecting. This will be shown if authorization fails.
+  // If verification is done and user is not authorized, show a redirecting message.
+  // This state is briefly visible while signOut and router redirection complete.
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
       <Loader2 className="h-8 w-8 animate-spin text-destructive" />
