@@ -16,54 +16,69 @@ export default function DashboardLayout({
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const router = useRouter();
-  const [isVerifying, setIsVerifying] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState(false);
   const { toast } = useToast();
+  
+  // Combine loading and verifying state
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
+    // If Firebase Auth is still loading, wait.
     if (isUserLoading) {
-      return; // Wait until user status is loaded
+      return; 
     }
 
+    // If no user is logged in, redirect to login page.
     if (!user) {
-      // If no user, redirect to login
-      router.push('/login');
+      router.replace('/login');
       return;
     }
+    
+    let isMounted = true; // Prevent state updates on unmounted component
 
-    // User exists, now verify authorization
-    getOrCreateUser(user)
-      .then(() => {
-        // User is authorized
-        setIsAuthorized(true);
-        setIsVerifying(false);
-      })
-      .catch((error) => {
-        // User is not authorized
+    // User is logged in, now verify if they are in the allowlist.
+    const verifyUser = async () => {
+      try {
+        await getOrCreateUser(user);
+        // If the above promise resolves, the user is authorized.
+        if (isMounted) {
+          setIsAuthorized(true);
+          setIsLoading(false);
+        }
+      } catch (error: any) {
+        // If it rejects, the user is not authorized.
         console.error("Authorization Error:", error.message);
         toast({
           variant: "destructive",
           title: "Akses Ditolak",
-          description: error.message || "Anda tidak memiliki izin untuk mengakses halaman ini.",
+          description: "Anda tidak memiliki izin untuk mengakses halaman ini.",
         });
-        
-        // Mark as not authorized and stop verification
-        setIsAuthorized(false);
-        setIsVerifying(false);
 
-        // Sign out and redirect
-        if (auth) {
-          signOut(auth).finally(() => {
-            router.push('/login');
-          });
-        } else {
-          router.push('/login');
+        if (isMounted) {
+          setIsAuthorized(false);
+          // Don't set isLoading to false yet, show a redirecting message.
         }
-      });
-  }, [user, isUserLoading, router, auth, toast]);
+        
+        // Sign out the unauthorized user and redirect.
+        if (auth) {
+          await signOut(auth);
+        }
+        // Redirect after sign-out is complete
+        router.replace('/login');
+      }
+    };
 
-  // Show a loader while Firebase is loading OR while we are verifying the user.
-  if (isUserLoading || isVerifying) {
+    verifyUser();
+
+    return () => {
+      isMounted = false;
+    };
+  // We only want this to run when the user's loading status changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isUserLoading, user]);
+
+
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -72,17 +87,15 @@ export default function DashboardLayout({
     );
   }
   
-  // If verification is complete and user is authorized, show the dashboard.
-  // Otherwise, the effect will have already started the redirection.
   if (isAuthorized) {
       return <>{children}</>;
   }
 
-  // Fallback while redirecting
+  // Fallback while redirecting. This will be shown if authorization fails.
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
       <Loader2 className="h-8 w-8 animate-spin text-destructive" />
-      <p className="text-muted-foreground">Mengalihkan ke halaman login...</p>
+      <p className="text-muted-foreground">Akses ditolak. Mengalihkan...</p>
     </div>
   );
 }
