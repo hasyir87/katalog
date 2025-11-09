@@ -37,20 +37,6 @@ export async function getOrCreateUser(user: User) {
 
 // --- Perfume Actions ---
 
-export async function getPerfumes(): Promise<Perfume[]> {
-  try {
-    const db = await getDb();
-    const perfumesCollection = db.collection('perfumes');
-    const snapshot = await perfumesCollection.get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
-  } catch (error: any) {
-    console.error("Error fetching perfumes: ", error.message);
-    // Return an empty array on error to prevent the app from crashing.
-    // The console error will indicate the underlying problem.
-    return [];
-  }
-}
-
 export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
   try {
     const db = await getDb();

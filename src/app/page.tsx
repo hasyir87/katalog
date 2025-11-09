@@ -1,12 +1,24 @@
+'use client';
+
 import Image from 'next/image';
-import { getPerfumes } from '@/lib/actions';
+import { useCollection, useMemoFirebase, useFirestore } from '@/firebase';
 import { PerfumeCard } from '@/components/perfume-card';
 import { RecommendationSection } from '@/components/recommendation-section';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { collection } from 'firebase/firestore';
+import type { Perfume } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default async function Home() {
-  const perfumes = await getPerfumes();
+export default function Home() {
+  const firestore = useFirestore();
+  
+  const perfumesCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'perfumes');
+  }, [firestore]);
+
+  const { data: perfumes, isLoading } = useCollection<Perfume>(perfumesCollection);
 
   return (
     <div className="flex flex-col min-h-[100dvh]">
@@ -54,7 +66,11 @@ export default async function Home() {
                 </p>
               </div>
             </div>
-            {perfumes.length > 0 ? (
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8 pt-12">
+                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-96 rounded-lg" />)}
+              </div>
+            ) : perfumes && perfumes.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8 pt-12 animate-in fade-in-0 duration-500">
                 {perfumes.map((perfume) => (
                   <PerfumeCard key={perfume.id} perfume={perfume} />

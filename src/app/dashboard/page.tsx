@@ -1,12 +1,32 @@
-import { getPerfumes } from "@/lib/actions";
+'use client';
+
+import { useCollection, useMemoFirebase } from "@/firebase";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Loader2 } from "lucide-react";
 import { DataTable } from "@/components/dashboard/data-table";
 import { columns } from "@/components/dashboard/columns";
+import { useFirestore } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import type { Perfume } from "@/lib/types";
 
-export default async function DashboardPage() {
-    const perfumes = await getPerfumes();
+export default function DashboardPage() {
+    const firestore = useFirestore();
+    
+    const perfumesCollection = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return collection(firestore, 'perfumes');
+    }, [firestore]);
+
+    const { data: perfumes, isLoading } = useCollection<Perfume>(perfumesCollection);
+
+    if (isLoading) {
+        return (
+            <div className="container mx-auto py-10 flex justify-center items-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     return (
         <div className="container mx-auto py-10">
@@ -22,7 +42,7 @@ export default async function DashboardPage() {
                     </Link>
                 </Button>
             </div>
-            <DataTable columns={columns} data={perfumes} />
+            <DataTable columns={columns} data={perfumes ?? []} />
         </div>
     );
 }

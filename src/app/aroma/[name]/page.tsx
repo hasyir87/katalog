@@ -1,12 +1,33 @@
-import { getPerfumesByAroma } from "@/lib/actions";
+'use client';
+
+import { useCollection, useMemoFirebase } from "@/firebase";
 import { PerfumeCard } from "@/components/perfume-card";
 import { notFound } from "next/navigation";
+import { useFirestore } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import type { Perfume } from "@/lib/types";
+import { Loader2 } from "lucide-react";
 
-export default async function AromaPage({ params }: { params: { name: string } }) {
+export default function AromaPage({ params }: { params: { name: string } }) {
   const aromaName = decodeURIComponent(params.name);
-  const perfumes = await getPerfumesByAroma(aromaName);
+  const firestore = useFirestore();
 
-  if (perfumes.length === 0) {
+  const aromaQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'perfumes'), where('jenisAroma', '==', aromaName));
+  }, [firestore, aromaName]);
+
+  const { data: perfumes, isLoading } = useCollection<Perfume>(aromaQuery);
+
+  if (isLoading) {
+    return (
+      <main className="container mx-auto px-4 md:px-6 py-12 flex justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </main>
+    )
+  }
+
+  if (!isLoading && perfumes?.length === 0) {
     // Or render a "No perfumes found for this aroma" message
     notFound();
   }
@@ -22,7 +43,7 @@ export default async function AromaPage({ params }: { params: { name: string } }
             </p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8">
-            {perfumes.map((perfume) => (
+            {perfumes?.map((perfume) => (
                 <PerfumeCard key={perfume.id} perfume={perfume} />
             ))}
         </div>
