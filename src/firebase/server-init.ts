@@ -6,12 +6,15 @@ import { getFirestore, Firestore } from 'firebase-admin/firestore';
 // This function is carefully designed to work in both local and deployed environments.
 function getServiceAccount(): ServiceAccount | undefined {
     const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+    
+    // In a deployed environment (like App Hosting), the service account is often
+    // discovered automatically and this environment variable may not be set.
+    // If it's missing, we let the SDK try to find default credentials.
     if (!serviceAccountJson) {
-        // In a deployed environment (like App Hosting), the service account is often
-        // discovered automatically and this environment variable may not be set.
-        // Returning undefined is the correct behavior in this case.
+        console.log("FIREBASE_SERVICE_ACCOUNT env var not found. Relying on default credentials.");
         return undefined;
     }
+
     try {
         const parsed = JSON.parse(serviceAccountJson);
         // The error "Service account object must contain a string 'project_id' property"
@@ -21,29 +24,38 @@ function getServiceAccount(): ServiceAccount | undefined {
             return parsed as ServiceAccount;
         }
         console.error("Parsed FIREBASE_SERVICE_ACCOUNT JSON is not a valid service account object.");
-        return undefined;
-    } catch (e) {
-        console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT JSON:", e);
-        return undefined;
+        throw new Error("Invalid service account JSON.");
+    } catch (e: any) {
+        console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT JSON:", e.message);
+        throw new Error("Could not parse FIREBASE_SERVICE_ACCOUNT JSON.");
     }
 }
 
 let db: Firestore;
+let dbInitializationError: Error | null = null;
 
 function initializeDb() {
-    if (db) {
+    // Prevent re-initialization if already done or if it failed previously.
+    if (db || dbInitializationError) {
         return;
     }
-    // Ensure this only runs once.
-    if (getApps().length === 0) {
-        const serviceAccount = getServiceAccount();
-        const options = serviceAccount 
-            ? { credential: cert(serviceAccount) } 
-            : {}; // For deployed environments, the SDK will auto-discover credentials.
-        const adminApp = initializeApp(options);
-        db = getFirestore(adminApp);
-    } else {
-        db = getFirestore(getApp());
+
+    try {
+        if (getApps().length === 0) {
+            const serviceAccount = getServiceAccount();
+            const options = serviceAccount 
+                ? { credential: cert(serviceAccount) } 
+                : {}; // For deployed environments, the SDK will auto-discover credentials.
+            
+            // If running locally without a service account, this will throw an error.
+            const adminApp = initializeApp(options);
+            db = getFirestore(adminApp);
+        } else {
+            db = getFirestore(getApp());
+        }
+    } catch (error: any) {
+        console.error("CRITICAL: Failed to initialize Firebase Admin SDK.", error.message);
+        dbInitializationError = error;
     }
 }
 
@@ -51,8 +63,12 @@ function initializeDb() {
 initializeDb();
 
 // Export a function that returns the initialized database instance.
-// This is the correct way to expose a value from a 'use server' file.
-export async function getDb() {
-    // This function must be async to be a valid Server Action.
+export async function getDb(): Promise<Firestore> {
+    if (dbInitializationError) {
+        throw new Error(`Firebase Admin SDK is not initialized. Reason: ${dbInitializationError.message}`);
+    }
+    if (!db) {
+         throw new Error("Firebase Admin SDK could not be initialized. The 'db' instance is not available. This might happen if running locally without credentials.");
+    }
     return db;
 }

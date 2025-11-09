@@ -6,7 +6,7 @@ import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
 import type { User } from 'firebase/auth'; // This is client-side, but only used for its type, which is fine.
 
-// Use Firestore Admin SDK functions. Note that the import is different from the client SDK.
+// Use Firestore Admin SDK functions.
 import { getFirestore } from 'firebase-admin/firestore';
 
 
@@ -43,8 +43,10 @@ export async function getPerfumes(): Promise<Perfume[]> {
     const perfumesCollection = db.collection('perfumes');
     const snapshot = await perfumesCollection.get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
-  } catch (error) {
-    console.error("Error fetching perfumes: ", error);
+  } catch (error: any) {
+    console.error("Error fetching perfumes: ", error.message);
+    // Return an empty array on error to prevent the app from crashing.
+    // The console error will indicate the underlying problem.
     return [];
   }
 }
@@ -58,8 +60,8 @@ export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
       return { id: docSnap.id, ...docSnap.data() } as Perfume;
     }
     return undefined;
-  } catch (error) {
-    console.error("Error fetching perfume by ID: ", error);
+  } catch (error: any) {
+    console.error("Error fetching perfume by ID: ", error.message);
     return undefined;
   }
 }
@@ -71,8 +73,8 @@ export async function getPerfumesByAroma(aroma: string): Promise<Perfume[]> {
         const q = perfumesCollection.where("jenisAroma", "==", aroma);
         const snapshot = await q.get();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
-    } catch (error) {
-        console.error("Error fetching perfumes by aroma: ", error);
+    } catch (error: any) {
+        console.error("Error fetching perfumes by aroma: ", error.message);
         return [];
     }
 }
@@ -87,17 +89,18 @@ export async function addPerfume(data: Omit<Perfume, 'id'>) {
     revalidatePath('/');
     revalidatePath('/dashboard');
     return { id: docRef.id, ...validatedData };
-  } catch (error) {
-     console.error("Error adding perfume: ", error);
+  } catch (error: any) {
+     console.error("Error adding perfume: ", error.message);
      throw new Error('Failed to add perfume.');
   }
 }
 
 export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'>>) {
   const validatedData = perfumeSchema.partial().parse(data);
-  const db = await getDb();
-  const docRef = db.collection('perfumes').doc(id);
+  
   try {
+    const db = await getDb();
+    const docRef = db.collection('perfumes').doc(id);
     await docRef.update(validatedData);
     revalidatePath('/');
     revalidatePath('/dashboard');
@@ -105,17 +108,18 @@ export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'
     if (validatedData.jenisAroma) {
         revalidatePath(`/aroma/${validatedData.jenisAroma}`);
     }
-  } catch (error) {
-    console.error("Error updating perfume: ", error);
+  } catch (error: any) {
+    console.error("Error updating perfume: ", error.message);
     throw new Error('Failed to update perfume.');
   }
 }
 
 export async function deletePerfume(id: string) {
-  const db = await getDb();
-  const docRef = db.collection('perfumes').doc(id);
   try {
+    const db = await getDb();
+    const docRef = db.collection('perfumes').doc(id);
     const docSnap = await docRef.get();
+
     if (docSnap.exists) {
         const perfume = docSnap.data() as Perfume;
 
@@ -135,7 +139,7 @@ export async function deletePerfume(id: string) {
         throw new Error('Perfume not found');
     }
   } catch (error: any) {
-     console.error("Error deleting perfume: ", error);
+     console.error("Error deleting perfume: ", error.message);
      // Re-throw the original error message, whether it's from our protection logic or Firestore
      throw new Error(error.message || 'Failed to delete perfume.');
   }
