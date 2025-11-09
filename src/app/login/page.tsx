@@ -22,41 +22,52 @@ export default function LoginPage() {
   const [isSigningIn, setIsSigningIn] = useState(true); // Start as true to handle initial check
 
   useEffect(() => {
-    // If user is found, redirect to dashboard. This is the primary redirect logic.
-    if (user) {
+    console.log("LoginPage: useEffect triggered.", { isUserLoading, hasUser: !!user });
+    // If user is found, redirect to dashboard.
+    if (!isUserLoading && user) {
+      console.log("LoginPage: User found, redirecting to /dashboard.");
       router.push('/dashboard');
       return;
     }
 
     // If still loading user status, wait.
     if (isUserLoading) {
+      console.log("LoginPage: Still loading user, waiting.");
       return;
     }
     
     // If not loading and no user, process potential redirect result.
     if (auth) {
+      console.log("LoginPage: Checking for redirect result.");
       getRedirectResult(auth)
         .then((result) => {
           if (result) {
-            // A sign-in just happened. The `user` object will be updated by the
-            // global `onAuthStateChanged` listener, and the next run of this effect
-            // will catch `if (user)` and redirect. We don't need to do anything else.
+            console.log("LoginPage: getRedirectResult successful.", { user: result.user });
+            // The `onAuthStateChanged` listener in FirebaseProvider will handle the user state update.
+            // The next run of this effect will catch `if (user)` and redirect.
+          } else {
+            console.log("LoginPage: No redirect result found. Showing login page.");
           }
           // If no user and no redirect result, it means we should show the login page.
           setIsSigningIn(false);
         })
         .catch((error) => {
-          console.error('Error processing redirect result:', error);
+          console.error('LoginPage: Error processing redirect result:', error);
           setIsSigningIn(false); // Stop loading on error
         });
     } else {
+        console.log("LoginPage: Auth service not available. Showing login page.");
         // If auth service is not available, stop loading.
         setIsSigningIn(false);
     }
   }, [user, isUserLoading, auth, router]);
 
   const handleSignIn = async () => {
-    if (!auth) return;
+    if (!auth) {
+        console.error("LoginPage: handleSignIn called but auth service is not available.");
+        return;
+    }
+    console.log("LoginPage: Starting sign-in with redirect.");
     setIsSigningIn(true);
     const provider = new GoogleAuthProvider();
     await signInWithRedirect(auth, provider);
@@ -64,6 +75,7 @@ export default function LoginPage() {
 
   // While checking for redirect result or waiting for user state to be confirmed
   if (isSigningIn || isUserLoading) {
+    console.log("LoginPage: Rendering loading indicator.", { isSigningIn, isUserLoading });
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -73,6 +85,7 @@ export default function LoginPage() {
   }
 
   // Render login page only if not loading and no user is found.
+  console.log("LoginPage: Rendering login form.");
   return (
     <div className="w-full min-h-[calc(100vh-10rem)] lg:grid lg:grid-cols-2">
       <div className="flex items-center justify-center py-12">
@@ -85,8 +98,8 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
-              <Button variant="outline" className="w-full" onClick={handleSignIn}>
-                <GoogleIcon />
+              <Button variant="outline" className="w-full" onClick={handleSignIn} disabled={isSigningIn}>
+                {isSigningIn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
                 Masuk dengan Google
               </Button>
             </div>

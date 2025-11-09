@@ -41,14 +41,17 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   // Effect to subscribe to Firebase auth state changes
   useEffect(() => {
     if (!auth) { 
+      console.log("FirebaseProvider: Auth service not available.");
       setUser(null);
       setIsUserLoading(false);
       return;
     }
-
+    
+    console.log("FirebaseProvider: Subscribing to onAuthStateChanged.");
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => { 
+        console.log("FirebaseProvider: onAuthStateChanged triggered.", { hasUser: !!firebaseUser });
         setUser(firebaseUser);
         setIsUserLoading(false);
       },
@@ -58,7 +61,10 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         setIsUserLoading(false);
       }
     );
-    return () => unsubscribe(); 
+    return () => {
+      console.log("FirebaseProvider: Unsubscribing from onAuthStateChanged.");
+      unsubscribe();
+    }
   }, [auth]); 
 
   // Memoize the context value
@@ -70,7 +76,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       isUserLoading,
   }), [firebaseApp, firestore, auth, user, isUserLoading]);
 
-  if (isUserLoading) {
+  if (isUserLoading && contextValue.isUserLoading) {
+     console.log("FirebaseProvider: Render loading skeleton.");
      return (
       <div className="flex flex-col min-h-screen">
         <header className="flex items-center h-20 px-4 border-b shrink-0 md:px-6 container">
@@ -91,7 +98,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       </div>
     );
   }
-
+  
+  console.log("FirebaseProvider: Rendering children.", { isUserLoading: contextValue.isUserLoading, hasUser: !!contextValue.user });
   return (
     <FirebaseContext.Provider value={contextValue}>
       <FirebaseErrorListener />
