@@ -6,6 +6,7 @@ import { db } from '@/firebase/server-init';
 import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
 import type { User } from 'firebase/auth';
+import { allowedUsers } from './auth-allowlist';
 
 const perfumeSchema = z.object({
   number: z.coerce.number().int().positive(),
@@ -24,32 +25,35 @@ const perfumeSchema = z.object({
 
 const userProfileSchema = z.object({
   displayName: z.string().nullable(),
-  email: z.string().email().nullable(),
+  email: z.string().email(),
   photoURL: z.string().url().nullable(),
 });
+
 
 // --- User Actions ---
 
 export async function getOrCreateUser(user: User) {
+  // Security Check: Verify if user's email is in the allowlist.
+  if (!user.email || !allowedUsers.includes(user.email)) {
+    console.warn(`Unauthorized login attempt by: ${user.email}`);
+    // Throw an error to be caught by the calling component.
+    throw new Error("You are not authorized to access this application.");
+  }
+  
   const userRef = doc(db, 'users', user.uid);
   const docSnap = await getDoc(userRef);
 
   if (docSnap.exists()) {
-    console.log("User profile already exists:", docSnap.data());
     return docSnap.data();
   } else {
-    console.log("Creating new user profile for:", user.uid);
     const newUserProfile = {
         displayName: user.displayName,
         email: user.email,
         photoURL: user.photoURL,
     };
-    // We don't use the Zod schema here at runtime on the server for getOrCreateUser
-    // to avoid potential mismatches if the User object has nulls.
-    // The most important thing is to get the user data into Firestore.
-    await setDoc(userRef, newUserProfile);
-    console.log("Successfully created new user profile.");
-    return newUserProfile;
+    const validatedProfile = userProfileSchema.parse(newUserProfile);
+    await setDoc(userRef, validatedProfile);
+    return validatedProfile;
   }
 }
 

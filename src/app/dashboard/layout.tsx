@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/firebase';
+import { useUser, useAuth } from '@/firebase';
 import { getOrCreateUser } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { signOut } from 'firebase/auth';
 
 export default function DashboardLayout({
   children,
@@ -12,8 +14,10 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { user, isUserLoading } = useUser();
+  const auth = useAuth();
   const router = useRouter();
   const [isVerifying, setIsVerifying] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isUserLoading) {
@@ -24,21 +28,33 @@ export default function DashboardLayout({
       // Jika tidak ada pengguna setelah pemuatan selesai, alihkan ke login
       router.push('/login');
     } else {
-      // Jika ada pengguna, verifikasi/buat profil di database
+      // Jika ada pengguna, verifikasi/buat profil di database dan periksa allowlist
       getOrCreateUser(user)
         .then(() => {
-          // Profil pengguna dikonfirmasi, izinkan akses ke dasbor
+          // Profil pengguna dikonfirmasi & diizinkan, izinkan akses ke dasbor
           setIsVerifying(false);
         })
         .catch((error) => {
-          console.error("Failed to get or create user profile:", error);
-          // Mungkin tangani kesalahan ini, misalnya dengan logout atau menampilkan pesan
-          router.push('/login'); // Kembali ke login jika profil tidak bisa dibuat
+          console.error("Authorization Error:", error.message);
+          toast({
+            variant: "destructive",
+            title: "Akses Ditolak",
+            description: error.message || "Anda tidak memiliki izin untuk mengakses halaman ini.",
+          });
+          
+          // Sign out the user from Firebase client-side
+          if (auth) {
+            signOut(auth).then(() => {
+              router.push('/login'); // Kembali ke login setelah sign out
+            });
+          } else {
+            router.push('/login'); // Fallback if auth is not available
+          }
         });
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, auth, toast]);
 
-  // Tampilkan pemuat saat Firebase memuat ATAU saat kami memverifikasi profil database
+  // Tampilkan pemuat saat Firebase memuat ATAU saat kami memverifikasi profil database & allowlist
   if (isUserLoading || isVerifying) {
     return (
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
