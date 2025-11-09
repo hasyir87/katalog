@@ -8,4 +8,5 @@ export const allowedUsers: string[] = [
   // "admin@example.com",
   // "user1@example.com",
   "hasyir87@gmail.com",
+  "hasyir87@hotmail.com",
 ];

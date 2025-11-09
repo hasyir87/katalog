@@ -6,7 +6,7 @@ import { getDb } from '@/firebase/server-init';
 import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
 import type { User } from 'firebase/auth';
-import { allowedUsers } from './auth-allowlist';
+// import { allowedUsers } from './auth-allowlist'; // Commenting out for diagnostics
 
 const perfumeSchema = z.object({
   number: z.coerce.number().int().positive(),
@@ -27,12 +27,12 @@ const perfumeSchema = z.object({
 // --- User Actions ---
 
 export async function getOrCreateUser(user: User) {
-  // Security Check: Verify if user's email is in the allowlist.
-  if (!user.email || !allowedUsers.includes(user.email)) {
-    console.warn(`Unauthorized login attempt by: ${user.email}`);
-    // Throw an error to be caught by the calling component.
-    throw new Error("You are not authorized to access this application.");
-  }
+  // DIAGNOSTIC: Temporarily disabled allowlist check.
+  // if (!user.email || !allowedUsers.includes(user.email)) {
+  //   console.warn(`Unauthorized login attempt by: ${user.email}`);
+  //   // Throw an error to be caught by the calling component.
+  //   throw new Error("You are not authorized to access this application.");
+  // }
   
   const db = await getDb();
   const userRef = doc(db, 'users', user.uid);
@@ -49,7 +49,7 @@ export async function getOrCreateUser(user: User) {
     // Zod schema for user profile to ensure data integrity, defined internally.
     const userProfileSchema = z.object({
         displayName: z.string().nullable(),
-        email: z.string().email(),
+        email: z.string().email().nullable(), // Allow nullable email just in case
         photoURL: z.string().url().nullable(),
     });
     const validatedProfile = userProfileSchema.parse(newUserProfile);

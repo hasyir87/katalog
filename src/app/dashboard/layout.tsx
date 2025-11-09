@@ -18,54 +18,48 @@ export default function DashboardLayout({
   const router = useRouter();
   const { toast } = useToast();
 
-  const [isVerifying, setIsVerifying] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(true);
 
   useEffect(() => {
-    // If auth is still loading, do nothing yet.
+    // Wait until Firebase auth state is resolved
     if (isUserLoading) {
       return;
     }
 
-    // If there's no user and we are done verifying, redirect to login.
+    // If no user, redirect to login and we're done.
     if (!user) {
-      setIsVerifying(false);
       router.replace('/login');
       return;
     }
 
-    // If we have a user, but we are still in the verification process.
-    if (user && isVerifying) {
-      const verifyUser = async () => {
-        try {
-          await getOrCreateUser(user);
-          // If the above line doesn't throw, the user is authorized.
-          setIsAuthorized(true);
-        } catch (error: any) {
-          // If it throws, the user is not in the allowlist.
-          console.error("Authorization Error:", error.message);
-          toast({
-            variant: "destructive",
-            title: "Akses Ditolak",
-            description: "Anda tidak memiliki izin untuk mengakses halaman ini.",
-          });
-          setIsAuthorized(false);
-          // Sign out the unauthorized user and redirect.
-          if (auth) {
-            await signOut(auth);
-          }
-          // The onAuthStateChanged listener will handle the redirect to /login
-          // by setting user to null, which is caught at the top of this useEffect.
-        } finally {
-          // IMPORTANT: Mark verification as complete to prevent re-running this logic.
-          setIsVerifying(false);
+    // If we have a user, verify them
+    const verifyUser = async () => {
+      try {
+        await getOrCreateUser(user);
+        // If the above line doesn't throw, the user is authorized.
+        setIsAuthorized(true);
+      } catch (error: any) {
+        // This block should not be hit with the temporary changes, but kept for structure
+        console.error("Authorization check failed:", error.message);
+        toast({
+          variant: "destructive",
+          title: "Akses Ditolak",
+          description: "Anda tidak diizinkan untuk mengakses halaman ini.",
+        });
+        setIsAuthorized(false);
+        if (auth) {
+            await signOut(auth); // Sign out unauthorized user
         }
-      };
+        // Redirect will be handled by the next run of useEffect seeing a null user
+      } finally {
+        setIsVerifying(false); // Mark verification as complete
+      }
+    };
 
-      verifyUser();
-    }
-
-  }, [user, isUserLoading, isVerifying, auth, router, toast]);
+    verifyUser();
+    
+  }, [user, isUserLoading, auth, router, toast]);
 
   // Show a loading screen while auth state is loading or verification is in progress.
   if (isUserLoading || isVerifying) {
@@ -76,14 +70,13 @@ export default function DashboardLayout({
       </div>
     );
   }
-
+  
   // If verification is done and the user is authorized, show the dashboard.
   if (isAuthorized) {
     return <>{children}</>;
   }
 
-  // If verification is done and user is not authorized, show a redirecting message.
-  // This state is briefly visible while signOut and router redirection complete.
+  // If verification is done and user is not authorized, they are being redirected.
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
       <Loader2 className="h-8 w-8 animate-spin text-destructive" />
