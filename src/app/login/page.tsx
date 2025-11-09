@@ -19,36 +19,39 @@ export default function LoginPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const auth = useFirebaseAuth();
-  const [isSigningIn, setIsSigningIn] = useState(true);
+  const [isSigningIn, setIsSigningIn] = useState(true); // Start as true to handle initial check
 
   useEffect(() => {
-    if (isUserLoading) {
-      return; // Wait until user status is determined
-    }
-
+    // If user is found, redirect to dashboard. This is the primary redirect logic.
     if (user) {
-      // If user is already logged in, redirect to dashboard.
-      // This is the primary redirect logic.
       router.push('/dashboard');
       return;
     }
 
-    // If not loading and no user, process redirect result from Google.
+    // If still loading user status, wait.
+    if (isUserLoading) {
+      return;
+    }
+    
+    // If not loading and no user, process potential redirect result.
     if (auth) {
       getRedirectResult(auth)
         .then((result) => {
           if (result) {
-            // A sign-in just happened. The 'user' object will be updated by the
-            // global state listener, and the next run of this effect will
-            // trigger the redirect to '/dashboard'.
+            // A sign-in just happened. The `user` object will be updated by the
+            // global `onAuthStateChanged` listener, and the next run of this effect
+            // will catch `if (user)` and redirect. We don't need to do anything else.
           }
           // If no user and no redirect result, it means we should show the login page.
           setIsSigningIn(false);
         })
         .catch((error) => {
           console.error('Error processing redirect result:', error);
-          setIsSigningIn(false);
+          setIsSigningIn(false); // Stop loading on error
         });
+    } else {
+        // If auth service is not available, stop loading.
+        setIsSigningIn(false);
     }
   }, [user, isUserLoading, auth, router]);
 
@@ -59,8 +62,8 @@ export default function LoginPage() {
     await signInWithRedirect(auth, provider);
   };
 
-  // Show a loading screen while checking auth status, or if the user is already logged in and we are about to redirect.
-  if (isUserLoading || user) {
+  // While checking for redirect result or waiting for user state to be confirmed
+  if (isSigningIn || isUserLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -68,18 +71,8 @@ export default function LoginPage() {
       </div>
     );
   }
-  
-  // Show login UI only if we are certain there's no user and no sign-in process is happening.
-  if (isSigningIn) {
-      return (
-        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Mengarahkan ke Google...</p>
-        </div>
-      );
-  }
 
-
+  // Render login page only if not loading and no user is found.
   return (
     <div className="w-full min-h-[calc(100vh-10rem)] lg:grid lg:grid-cols-2">
       <div className="flex items-center justify-center py-12">
@@ -92,7 +85,7 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
-              <Button variant="outline" className="w-full" onClick={handleSignIn} disabled={isSigningIn}>
+              <Button variant="outline" className="w-full" onClick={handleSignIn}>
                 <GoogleIcon />
                 Masuk dengan Google
               </Button>
