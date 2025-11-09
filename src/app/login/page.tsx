@@ -19,63 +19,54 @@ export default function LoginPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const auth = useFirebaseAuth();
-  const [isSigningIn, setIsSigningIn] = useState(true); // Start as true to handle initial check
+  const [isProcessingLogin, setIsProcessingLogin] = useState(true);
 
   useEffect(() => {
-    console.log("LoginPage: useEffect triggered.", { isUserLoading, hasUser: !!user });
-    // If user is found, redirect to dashboard.
+    // Jika pengguna sudah ada DAN pemuatan selesai, alihkan ke dasbor.
+    // Ini menangani kasus di mana pengguna kembali ke halaman login saat sudah masuk.
     if (!isUserLoading && user) {
-      console.log("LoginPage: User found, redirecting to /dashboard.");
       router.push('/dashboard');
       return;
     }
 
-    // If still loading user status, wait.
-    if (isUserLoading) {
-      console.log("LoginPage: Still loading user, waiting.");
-      return;
-    }
-    
-    // If not loading and no user, process potential redirect result.
+    // Tangani hasil pengalihan dari Google.
     if (auth) {
-      console.log("LoginPage: Checking for redirect result.");
       getRedirectResult(auth)
         .then((result) => {
           if (result) {
-            console.log("LoginPage: getRedirectResult successful.", { user: result.user });
-            // The `onAuthStateChanged` listener in FirebaseProvider will handle the user state update.
-            // The next run of this effect will catch `if (user)` and redirect.
-          } else {
-            console.log("LoginPage: No redirect result found. Showing login page.");
+            // Pengguna berhasil login melalui pengalihan.
+            // Listener onAuthStateChanged akan menangani pembaruan status pengguna.
+            // useEffect berikutnya akan menangkap pengguna baru dan mengalihkan.
+            // Kita tidak perlu melakukan pengalihan di sini.
           }
-          // If no user and no redirect result, it means we should show the login page.
-          setIsSigningIn(false);
+          // Baik ada hasil pengalihan atau tidak, pemrosesan selesai.
+          setIsProcessingLogin(false);
         })
         .catch((error) => {
-          console.error('LoginPage: Error processing redirect result:', error);
-          setIsSigningIn(false); // Stop loading on error
+          console.error('Error processing redirect result:', error);
+          setIsProcessingLogin(false);
         });
     } else {
-        console.log("LoginPage: Auth service not available. Showing login page.");
-        // If auth service is not available, stop loading.
-        setIsSigningIn(false);
+        // Jika auth belum siap, hentikan pemrosesan.
+        if (!isUserLoading) {
+            setIsProcessingLogin(false);
+        }
     }
   }, [user, isUserLoading, auth, router]);
 
   const handleSignIn = async () => {
     if (!auth) {
-        console.error("LoginPage: handleSignIn called but auth service is not available.");
+        console.error("handleSignIn called but auth service is not available.");
         return;
     }
-    console.log("LoginPage: Starting sign-in with redirect.");
-    setIsSigningIn(true);
+    setIsProcessingLogin(true); // Tampilkan pemuat saat memulai proses login
     const provider = new GoogleAuthProvider();
+    // Mulai alur login dengan pengalihan
     await signInWithRedirect(auth, provider);
   };
 
-  // While checking for redirect result or waiting for user state to be confirmed
-  if (isSigningIn || isUserLoading) {
-    console.log("LoginPage: Rendering loading indicator.", { isSigningIn, isUserLoading });
+  // Tampilkan pemuat saat memeriksa status pengguna, memproses pengalihan, atau dalam proses masuk.
+  if (isUserLoading || isProcessingLogin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -83,9 +74,8 @@ export default function LoginPage() {
       </div>
     );
   }
-
-  // Render login page only if not loading and no user is found.
-  console.log("LoginPage: Rendering login form.");
+  
+  // Hanya tampilkan halaman login jika pemuatan selesai, tidak ada pengguna, dan tidak sedang memproses login.
   return (
     <div className="w-full min-h-[calc(100vh-10rem)] lg:grid lg:grid-cols-2">
       <div className="flex items-center justify-center py-12">
@@ -98,8 +88,8 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
-              <Button variant="outline" className="w-full" onClick={handleSignIn} disabled={isSigningIn}>
-                {isSigningIn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
+              <Button variant="outline" className="w-full" onClick={handleSignIn} disabled={isProcessingLogin}>
+                {isProcessingLogin ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
                 Masuk dengan Google
               </Button>
             </div>

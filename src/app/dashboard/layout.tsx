@@ -14,27 +14,21 @@ export default function DashboardLayout({
   const router = useRouter();
 
   useEffect(() => {
-    console.log("DashboardLayout: useEffect triggered.", { isUserLoading, hasUser: !!user });
-    
-    // Wait until the user loading state is definitively false.
+    // Hanya membuat keputusan setelah status autentikasi selesai dimuat.
     if (isUserLoading) {
-      console.log("DashboardLayout: Still loading user, waiting.");
-      return; // Do nothing while loading.
+      // Jangan lakukan apa-apa selagi Firebase masih memeriksa status login.
+      return;
     }
 
-    // If loading is finished and there's still no user, redirect to login.
+    // Setelah pemuatan selesai, jika tidak ada pengguna, arahkan ke halaman login.
     if (!user) {
-      console.log("DashboardLayout: No user found after loading, redirecting to /login.");
       router.push('/login');
-    } else {
-      console.log("DashboardLayout: User is present, allowing access.");
     }
   }, [user, isUserLoading, router]);
 
-  // While loading, or if there's no user yet (and the redirect is about to happen),
-  // show a loading indicator. This prevents the children from rendering prematurely.
+  // Tampilkan indikator pemuatan jika Firebase sedang memuat atau jika belum ada pengguna
+  // (karena pengalihan akan segera terjadi). Ini mencegah konten dasbor berkedip sesaat.
   if (isUserLoading || !user) {
-    console.log("DashboardLayout: Rendering loading indicator.", { isUserLoading, hasUser: !!user });
     return (
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -43,7 +37,6 @@ export default function DashboardLayout({
     );
   }
 
-  // If loading is done and a user exists, render the dashboard content.
-  console.log("DashboardLayout: Rendering children.");
+  // Jika pemuatan selesai dan ada pengguna, tampilkan konten dasbor.
   return <>{children}</>;
 }
