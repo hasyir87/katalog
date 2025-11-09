@@ -3,53 +3,51 @@
 import { initializeApp, getApps, getApp, ServiceAccount, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
+// This function is carefully designed to work in both local and deployed environments.
 function getServiceAccount(): ServiceAccount | undefined {
     const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
-    if (serviceAccountJson) {
-        try {
-            // Trim the string to remove potential whitespace or quotes
-            // that might be added by the environment variable loader.
-            const cleanedJson = serviceAccountJson.trim();
-            return JSON.parse(cleanedJson);
-        } catch (e) {
-            console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT JSON:", e);
-            // Log the problematic string for debugging, but be careful in production.
-            // console.error("Problematic JSON string:", serviceAccountJson);
-            return undefined;
-        }
+    if (!serviceAccountJson) {
+        // In a deployed environment (like App Hosting), the service account is often
+        // discovered automatically and this environment variable may not be set.
+        // Returning undefined is the correct behavior in this case.
+        return undefined;
     }
-    return undefined;
+    try {
+        const parsed = JSON.parse(serviceAccountJson);
+        // The error "Service account object must contain a string 'project_id' property"
+        // indicates that the parsed JSON is not a valid Service Account object.
+        // We add a check to ensure the essential properties exist.
+        if (parsed.project_id && parsed.client_email && parsed.private_key) {
+            return parsed as ServiceAccount;
+        }
+        console.error("Parsed FIREBASE_SERVICE_ACCOUNT JSON is not a valid service account object.");
+        return undefined;
+    } catch (e) {
+        console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT JSON:", e);
+        return undefined;
+    }
 }
 
-if (getApps().length === 0) {
+let db: ReturnType<typeof getFirestore>;
+
+function initializeAdminApp() {
+    // Ensure this only runs once.
+    if (getApps().length > 0) {
+        return getApp();
+    }
+
     const serviceAccount = getServiceAccount();
-    // Only initialize if a valid service account is found
-    if (serviceAccount && serviceAccount.projectId) {
-        initializeApp({
-            credential: cert(serviceAccount),
-        });
-    } else {
-        // In a deployed environment, App Hosting provides default credentials.
-        // For local development, this might mean the .env file is missing or incorrect.
-        // We can attempt to initialize without explicit credentials,
-        // which works in some environments (like Cloud Run, Cloud Functions).
-        // If it fails, it will throw a clearer error.
-        try {
-             initializeApp();
-        } catch(e) {
-            console.error("Failed to initialize Firebase Admin SDK. Ensure FIREBASE_SERVICE_ACCOUNT is set in .env for local development.", e)
-        }
-    }
+    
+    const options = serviceAccount 
+        ? { credential: cert(serviceAccount) } 
+        : {}; // For deployed environments, the SDK will auto-discover credentials.
+
+    return initializeApp(options);
 }
 
+// Initialize the app and the database connection.
+const adminApp = initializeAdminApp();
+db = getFirestore(adminApp);
 
-// This function will now safely return the initialized db instance,
-// or throw an error if initialization failed.
-export async function getDb() {
-    if (getApps().length === 0) {
-        // This case should ideally not be hit if the top-level logic is correct.
-        throw new Error("Firebase Admin SDK not initialized.");
-    }
-    const adminApp = getApp();
-    return getFirestore(adminApp);
-};
+// Export the initialized database instance for use in server actions.
+export { db };

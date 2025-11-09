@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
+import { getOrCreateUser } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
 
 export default function DashboardLayout({
@@ -12,31 +13,41 @@ export default function DashboardLayout({
 }) {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const [isVerifying, setIsVerifying] = useState(true);
 
   useEffect(() => {
-    // Hanya membuat keputusan setelah status autentikasi selesai dimuat.
     if (isUserLoading) {
-      // Jangan lakukan apa-apa selagi Firebase masih memeriksa status login.
-      return;
+      return; // Tunggu sampai Firebase selesai memuat status pengguna
     }
 
-    // Setelah pemuatan selesai, jika tidak ada pengguna, arahkan ke halaman login.
     if (!user) {
+      // Jika tidak ada pengguna setelah pemuatan selesai, alihkan ke login
       router.push('/login');
+    } else {
+      // Jika ada pengguna, verifikasi/buat profil di database
+      getOrCreateUser(user)
+        .then(() => {
+          // Profil pengguna dikonfirmasi, izinkan akses ke dasbor
+          setIsVerifying(false);
+        })
+        .catch((error) => {
+          console.error("Failed to get or create user profile:", error);
+          // Mungkin tangani kesalahan ini, misalnya dengan logout atau menampilkan pesan
+          router.push('/login'); // Kembali ke login jika profil tidak bisa dibuat
+        });
     }
   }, [user, isUserLoading, router]);
 
-  // Tampilkan indikator pemuatan jika Firebase sedang memuat atau jika belum ada pengguna
-  // (karena pengalihan akan segera terjadi). Ini mencegah konten dasbor berkedip sesaat.
-  if (isUserLoading || !user) {
+  // Tampilkan pemuat saat Firebase memuat ATAU saat kami memverifikasi profil database
+  if (isUserLoading || isVerifying) {
     return (
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Memuat dasbor...</p>
+            <p className="text-muted-foreground">Memverifikasi sesi Anda...</p>
         </div>
     );
   }
 
-  // Jika pemuatan selesai dan ada pengguna, tampilkan konten dasbor.
+  // Jika pemuatan selesai, pengguna ada, dan verifikasi selesai, tampilkan konten dasbor
   return <>{children}</>;
 }

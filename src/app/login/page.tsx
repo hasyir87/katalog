@@ -22,24 +22,18 @@ export default function LoginPage() {
   const [isProcessingLogin, setIsProcessingLogin] = useState(true);
 
   useEffect(() => {
-    // Jika pengguna sudah ada DAN pemuatan selesai, alihkan ke dasbor.
-    // Ini menangani kasus di mana pengguna kembali ke halaman login saat sudah masuk.
     if (!isUserLoading && user) {
       router.push('/dashboard');
       return;
     }
 
-    // Tangani hasil pengalihan dari Google.
     if (auth) {
       getRedirectResult(auth)
         .then((result) => {
           if (result) {
             // Pengguna berhasil login melalui pengalihan.
             // Listener onAuthStateChanged akan menangani pembaruan status pengguna.
-            // useEffect berikutnya akan menangkap pengguna baru dan mengalihkan.
-            // Kita tidak perlu melakukan pengalihan di sini.
           }
-          // Baik ada hasil pengalihan atau tidak, pemrosesan selesai.
           setIsProcessingLogin(false);
         })
         .catch((error) => {
@@ -47,7 +41,6 @@ export default function LoginPage() {
           setIsProcessingLogin(false);
         });
     } else {
-        // Jika auth belum siap, hentikan pemrosesan.
         if (!isUserLoading) {
             setIsProcessingLogin(false);
         }
@@ -59,13 +52,11 @@ export default function LoginPage() {
         console.error("handleSignIn called but auth service is not available.");
         return;
     }
-    setIsProcessingLogin(true); // Tampilkan pemuat saat memulai proses login
+    setIsProcessingLogin(true);
     const provider = new GoogleAuthProvider();
-    // Mulai alur login dengan pengalihan
     await signInWithRedirect(auth, provider);
   };
 
-  // Tampilkan pemuat saat memeriksa status pengguna, memproses pengalihan, atau dalam proses masuk.
   if (isUserLoading || isProcessingLogin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
@@ -75,7 +66,6 @@ export default function LoginPage() {
     );
   }
   
-  // Hanya tampilkan halaman login jika pemuatan selesai, tidak ada pengguna, dan tidak sedang memproses login.
   return (
     <div className="w-full min-h-[calc(100vh-10rem)] lg:grid lg:grid-cols-2">
       <div className="flex items-center justify-center py-12">
