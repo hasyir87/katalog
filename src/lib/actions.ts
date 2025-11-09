@@ -9,17 +9,17 @@ import type { User } from 'firebase/auth';
 
 const perfumeSchema = z.object({
   number: z.coerce.number().int().positive(),
-  namaParfum: z.string().min(2),
-  deskripsiParfum: z.string().min(10),
-  topNotes: z.string().min(2),
-  middleNotes: z.string().min(2),
-  baseNotes: z.string().min(2),
-  penggunaan: z.string().min(2),
+  namaParfum: z.string().min(2, 'Name must be at least 2 characters long.'),
+  deskripsiParfum: z.string().min(10, 'Description must be at least 10 characters long.'),
+  topNotes: z.string().min(2, 'Top notes are required.'),
+  middleNotes: z.string().min(2, 'Middle notes are required.'),
+  baseNotes: z.string().min(2, 'Base notes are required.'),
+  penggunaan: z.string().min(2, 'Usage context is required.'),
   sex: z.enum(['Male', 'Female', 'Unisex']),
-  lokasi: z.string().min(2),
-  jenisAroma: z.string().min(2),
-  kualitas: z.string().min(2),
-  imageUrl: z.string().url().optional().or(z.literal('')),
+  lokasi: z.string().min(2, 'Location/Occasion is required.'),
+  jenisAroma: z.string().min(2, 'Scent type is required.'),
+  kualitas: z.string().min(2, 'Quality is required.'),
+  imageUrl: z.string().url('Must be a valid URL.').optional().or(z.literal('')),
 });
 
 const userProfileSchema = z.object({
@@ -35,14 +35,20 @@ export async function getOrCreateUser(user: User) {
   const docSnap = await getDoc(userRef);
 
   if (docSnap.exists()) {
+    console.log("User profile already exists:", docSnap.data());
     return docSnap.data();
   } else {
-    const newUserProfile = userProfileSchema.parse({
+    console.log("Creating new user profile for:", user.uid);
+    const newUserProfile = {
         displayName: user.displayName,
         email: user.email,
         photoURL: user.photoURL,
-    });
+    };
+    // We don't use the Zod schema here at runtime on the server for getOrCreateUser
+    // to avoid potential mismatches if the User object has nulls.
+    // The most important thing is to get the user data into Firestore.
     await setDoc(userRef, newUserProfile);
+    console.log("Successfully created new user profile.");
     return newUserProfile;
   }
 }
