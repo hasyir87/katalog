@@ -6,8 +6,8 @@ import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
 import type { User } from 'firebase/auth'; // This is client-side, but only used for its type, which is fine.
 
-// Use Firestore Admin SDK functions
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, setDoc } from 'firebase-admin/firestore';
+// Use Firestore Admin SDK functions. Note that the import is different from the client SDK.
+import { getFirestore } from 'firebase-admin/firestore';
 
 
 const perfumeSchema = z.object({
