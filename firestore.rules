@@ -8,7 +8,9 @@ service cloud.firestore {
     }
 
     match /perfumes/{perfumeId} {
+      // Allow anyone to read the perfume collection and individual documents
       allow read: if true;
+      // Only allow signed-in users to write (create, update, delete)
       allow write: if isSignedIn();
     }
     
