@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { Skeleton } from './ui/skeleton';
 
 export function Header() {
@@ -33,7 +32,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-20 items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2">
-          <Image src="/Logo.png" alt="M Perfume Logo" width={100} height={50} className="dark:invert"/>
+           <span className="font-bold font-headline text-xl">M Katalog Parfum</span>
         </Link>
         <nav className="flex-1 items-center space-x-6 text-sm font-medium hidden md:flex">
           <Link
