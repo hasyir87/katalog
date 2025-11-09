@@ -1,12 +1,14 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, setDoc } from 'firebase/firestore';
 import { getDb } from '@/firebase/server-init';
 import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
-import type { User } from 'firebase/auth';
-// import { allowedUsers } from './auth-allowlist'; // Commenting out for diagnostics
+import type { User } from 'firebase/auth'; // This is client-side, but only used for its type, which is fine.
+
+// Use Firestore Admin SDK functions
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, setDoc } from 'firebase-admin/firestore';
+
 
 const perfumeSchema = z.object({
   number: z.coerce.number().int().positive(),
@@ -27,8 +29,8 @@ const perfumeSchema = z.object({
 // --- User Actions ---
 
 export async function getOrCreateUser(user: User) {
-  // DIAGNOSTIC STEP: For now, this function does nothing but resolve.
-  // This bypasses any potential Firestore write errors to test the auth flow.
+  // This is a temporary diagnostic function. It bypasses Firestore to test the auth flow.
+  // It should always resolve successfully.
   return Promise.resolve();
 }
 
@@ -38,8 +40,8 @@ export async function getOrCreateUser(user: User) {
 export async function getPerfumes(): Promise<Perfume[]> {
   try {
     const db = await getDb();
-    const perfumesCollection = collection(db, 'perfumes');
-    const snapshot = await getDocs(perfumesCollection);
+    const perfumesCollection = db.collection('perfumes');
+    const snapshot = await perfumesCollection.get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
   } catch (error) {
     console.error("Error fetching perfumes: ", error);
@@ -50,9 +52,9 @@ export async function getPerfumes(): Promise<Perfume[]> {
 export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
   try {
     const db = await getDb();
-    const docRef = doc(db, 'perfumes', id);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
+    const docRef = db.collection('perfumes').doc(id);
+    const docSnap = await docRef.get();
+    if (docSnap.exists) {
       return { id: docSnap.id, ...docSnap.data() } as Perfume;
     }
     return undefined;
@@ -65,9 +67,9 @@ export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
 export async function getPerfumesByAroma(aroma: string): Promise<Perfume[]> {
     try {
         const db = await getDb();
-        const perfumesCollection = collection(db, 'perfumes');
-        const q = query(perfumesCollection, where("jenisAroma", "==", aroma));
-        const snapshot = await getDocs(q);
+        const perfumesCollection = db.collection('perfumes');
+        const q = perfumesCollection.where("jenisAroma", "==", aroma);
+        const snapshot = await q.get();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
     } catch (error) {
         console.error("Error fetching perfumes by aroma: ", error);
@@ -80,8 +82,8 @@ export async function addPerfume(data: Omit<Perfume, 'id'>) {
   const validatedData = perfumeSchema.parse(data);
   try {
     const db = await getDb();
-    const perfumesCollection = collection(db, 'perfumes');
-    const docRef = await addDoc(perfumesCollection, validatedData);
+    const perfumesCollection = db.collection('perfumes');
+    const docRef = await perfumesCollection.add(validatedData);
     revalidatePath('/');
     revalidatePath('/dashboard');
     return { id: docRef.id, ...validatedData };
@@ -94,9 +96,9 @@ export async function addPerfume(data: Omit<Perfume, 'id'>) {
 export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'>>) {
   const validatedData = perfumeSchema.partial().parse(data);
   const db = await getDb();
-  const docRef = doc(db, 'perfumes', id);
+  const docRef = db.collection('perfumes').doc(id);
   try {
-    await updateDoc(docRef, validatedData);
+    await docRef.update(validatedData);
     revalidatePath('/');
     revalidatePath('/dashboard');
     revalidatePath(`/perfume/${id}`);
@@ -111,10 +113,10 @@ export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'
 
 export async function deletePerfume(id: string) {
   const db = await getDb();
-  const docRef = doc(db, 'perfumes', id);
+  const docRef = db.collection('perfumes').doc(id);
   try {
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
+    const docSnap = await docRef.get();
+    if (docSnap.exists) {
         const perfume = docSnap.data() as Perfume;
 
         // Protection Logic: Prevent deletion of perfume with number 1
@@ -122,10 +124,12 @@ export async function deletePerfume(id: string) {
             throw new Error('This perfume is protected and cannot be deleted.');
         }
 
-        await deleteDoc(docRef);
+        await docRef.delete();
         revalidatePath('/');
         revalidatePath('/dashboard');
-        revalidatePath(`/aroma/${perfume.jenisAroma}`);
+        if (perfume.jenisAroma) {
+            revalidatePath(`/aroma/${perfume.jenisAroma}`);
+        }
         return { message: 'Perfume deleted successfully' };
     } else {
         throw new Error('Perfume not found');
