@@ -43,11 +43,11 @@ const DeleteConfirmation = ({ perfumeId, onDeleted }: { perfumeId: string, onDel
         description: 'Perfume has been deleted.',
       });
       onDeleted();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to delete perfume.',
+        description: error.message || 'Failed to delete perfume.',
       });
     } finally {
         setIsDeleting(false);

@@ -23,12 +23,6 @@ const perfumeSchema = z.object({
   imageUrl: z.string().url('Must be a valid URL.').optional().or(z.literal('')),
 });
 
-const userProfileSchema = z.object({
-  displayName: z.string().nullable(),
-  email: z.string().email(),
-  photoURL: z.string().url().nullable(),
-});
-
 
 // --- User Actions ---
 
@@ -51,6 +45,12 @@ export async function getOrCreateUser(user: User) {
         email: user.email,
         photoURL: user.photoURL,
     };
+    // Zod schema for user profile to ensure data integrity
+    const userProfileSchema = z.object({
+        displayName: z.string().nullable(),
+        email: z.string().email(),
+        photoURL: z.string().url().nullable(),
+    });
     const validatedProfile = userProfileSchema.parse(newUserProfile);
     await setDoc(userRef, validatedProfile);
     return validatedProfile;
@@ -133,17 +133,24 @@ export async function deletePerfume(id: string) {
   try {
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-        const deletedPerfume = docSnap.data() as Perfume;
+        const perfume = docSnap.data() as Perfume;
+
+        // Protection Logic: Prevent deletion of perfume with number 1
+        if (perfume.number === 1) {
+            throw new Error('This perfume is protected and cannot be deleted.');
+        }
+
         await deleteDoc(docRef);
         revalidatePath('/');
         revalidatePath('/dashboard');
-        revalidatePath(`/aroma/${deletedPerfume.jenisAroma}`);
+        revalidatePath(`/aroma/${perfume.jenisAroma}`);
         return { message: 'Perfume deleted successfully' };
     } else {
         throw new Error('Perfume not found');
     }
-  } catch (error) {
+  } catch (error: any) {
      console.error("Error deleting perfume: ", error);
-     throw new Error('Failed to delete perfume.');
+     // Re-throw the original error message, whether it's from our protection logic or Firestore
+     throw new Error(error.message || 'Failed to delete perfume.');
   }
 }
