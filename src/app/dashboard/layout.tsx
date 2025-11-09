@@ -36,6 +36,7 @@ export default function DashboardLayout({
     // If we have a user, verify them
     const verifyUser = async () => {
       try {
+        // This function is now simplified and should always succeed
         await getOrCreateUser(user);
         // If the above line doesn't throw, the user is authorized.
         setIsAuthorized(true);

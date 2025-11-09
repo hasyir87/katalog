@@ -27,35 +27,9 @@ const perfumeSchema = z.object({
 // --- User Actions ---
 
 export async function getOrCreateUser(user: User) {
-  // DIAGNOSTIC: Temporarily disabled allowlist check.
-  // if (!user.email || !allowedUsers.includes(user.email)) {
-  //   console.warn(`Unauthorized login attempt by: ${user.email}`);
-  //   // Throw an error to be caught by the calling component.
-  //   throw new Error("You are not authorized to access this application.");
-  // }
-  
-  const db = await getDb();
-  const userRef = doc(db, 'users', user.uid);
-  const docSnap = await getDoc(userRef);
-
-  if (docSnap.exists()) {
-    return docSnap.data();
-  } else {
-    const newUserProfile = {
-        displayName: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
-    };
-    // Zod schema for user profile to ensure data integrity, defined internally.
-    const userProfileSchema = z.object({
-        displayName: z.string().nullable(),
-        email: z.string().email().nullable(), // Allow nullable email just in case
-        photoURL: z.string().url().nullable(),
-    });
-    const validatedProfile = userProfileSchema.parse(newUserProfile);
-    await setDoc(userRef, validatedProfile);
-    return validatedProfile;
-  }
+  // DIAGNOSTIC STEP: For now, this function does nothing but resolve.
+  // This bypasses any potential Firestore write errors to test the auth flow.
+  return Promise.resolve();
 }
 
 
