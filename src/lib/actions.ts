@@ -45,7 +45,7 @@ export async function getOrCreateUser(user: User) {
         email: user.email,
         photoURL: user.photoURL,
     };
-    // Zod schema for user profile to ensure data integrity
+    // Zod schema for user profile to ensure data integrity, defined internally.
     const userProfileSchema = z.object({
         displayName: z.string().nullable(),
         email: z.string().email(),
