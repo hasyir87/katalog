@@ -84,7 +84,9 @@ export function ExcelImporter() {
 
     setIsImporting(true);
     try {
-      const result = await addPerfumesBatch(parsedData);
+      // Sanitize the data to ensure it's plain objects before sending to server action
+      const plainData = JSON.parse(JSON.stringify(parsedData));
+      const result = await addPerfumesBatch(plainData);
       
       if (result.errors.length > 0) {
          toast({
