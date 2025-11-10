@@ -33,7 +33,6 @@ const perfumeImportSchema = z.object({
   Lokasi: z.string(),
   'Jenis Aroma': z.string(),
   Kualitas: z.enum(['Premium', 'Extrait']),
-  'Image URL': z.string().url().optional().or(z.literal('')),
 });
 
 
@@ -149,7 +148,6 @@ export async function addPerfumesBatch(data: any[]) {
             'Lokasi': item.Lokasi,
             'Jenis Aroma': item['Jenis Aroma'],
             'Kualitas': item.Kualitas,
-            'Image URL': item['Image URL'] || `https://picsum.photos/seed/perfume${item.No}/400/600`,
         };
 
         const result = perfumeImportSchema.safeParse(mappedItem);
@@ -167,7 +165,6 @@ export async function addPerfumesBatch(data: any[]) {
                 lokasi: result.data.Lokasi,
                 jenisAroma: result.data['Jenis Aroma'],
                 kualitas: result.data.Kualitas,
-                imageUrl: result.data['Image URL'],
             };
             const docRef = db.collection('perfumes').doc(); // Auto-generate ID
             batch.set(docRef, perfumeData);
