@@ -185,7 +185,7 @@ export async function addPerfumesBatch(data: any[]) {
 
 export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id' | 'imageUrl' | 'number'>>) {
   // Use `passthrough` to allow other fields (like `number`) to exist on the object, but they won't be validated or used.
-  const validatedData = perfumeSchema.partial().passthrough().parse(data);
+  const validatedData = perfumeSchema.passthrough().parse(data);
   
   // We only want to save the validated fields from our schema, excluding any 'number' field that might be passed.
   const { number, ...dataToSave } = validatedData as any;
