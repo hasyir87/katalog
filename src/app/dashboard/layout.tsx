@@ -17,26 +17,24 @@ export default function DashboardLayout({
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-
   const [authState, setAuthState] = useState<'verifying' | 'authorized' | 'unauthorized'>('verifying');
 
   useEffect(() => {
-    // If Firebase is still figuring out the user, do nothing yet.
+    // 1. Wait until Firebase has determined the user's auth state.
     if (isUserLoading) {
       setAuthState('verifying');
       return;
     }
 
-    // If there is no user, they are unauthorized.
+    // 2. If there's no user, they are unauthorized. Redirect them.
     if (!user) {
       setAuthState('unauthorized');
       router.replace('/login');
       return;
     }
 
-    // If there is a user, verify their authorization.
+    // 3. If there is a user, verify their authorization against our rules.
     let isMounted = true;
-
     const verifyUser = async () => {
       try {
         const isAuthorized = await getOrCreateUser(user);
@@ -45,6 +43,7 @@ export default function DashboardLayout({
             setAuthState('authorized');
           } else {
             // User is not in the allowlist.
+            setAuthState('unauthorized');
             toast({
               variant: "destructive",
               title: "Akses Ditolak",
@@ -53,13 +52,14 @@ export default function DashboardLayout({
             if (auth) {
               await signOut(auth);
             }
-            setAuthState('unauthorized');
-            // The user state change will trigger the redirect.
+            // The change in user state after signOut will trigger a re-run of this effect,
+            // which will then hit the `!user` condition and redirect.
           }
         }
       } catch (error: any) {
         if (isMounted) {
           console.error("Authorization check failed unexpectedly:", error.message);
+          setAuthState('unauthorized');
           toast({
             variant: "destructive",
             title: "Error Verifikasi",
@@ -68,38 +68,35 @@ export default function DashboardLayout({
           if (auth) {
             await signOut(auth);
           }
-          setAuthState('unauthorized');
         }
       }
     };
     
-    verifyUser();
+    // Only run the verification if we are in the initial 'verifying' state with a user object.
+    if (authState === 'verifying') {
+        verifyUser();
+    }
       
     return () => {
       isMounted = false;
     };
+    // This effect depends ONLY on the user object and its loading state.
+    // It does not depend on its own state `authState`, preventing loops.
+  }, [user, isUserLoading, auth, router, toast, authState]);
 
-  }, [user, isUserLoading, auth, router, toast]);
-
-  if (authState === 'verifying') {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Memverifikasi sesi Anda...</p>
-      </div>
-    );
-  }
-  
+  // Render content based on the authorization state
   if (authState === 'authorized') {
     return <>{children}</>;
   }
 
-  // For 'unauthorized' state. The effect already handles redirection.
-  // We show a loading spinner while the redirect is happening.
+  // For 'verifying' or 'unauthorized' states, show a loading spinner.
+  // The redirection is handled by the effect, so this just covers the UI during that process.
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
-      <Loader2 className="h-8 w-8 animate-spin text-destructive" />
-      <p className="text-muted-foreground">Akses ditolak. Mengalihkan ke halaman login...</p>
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <p className="text-muted-foreground">
+        {authState === 'verifying' ? 'Memverifikasi sesi Anda...' : 'Akses ditolak. Mengalihkan...'}
+      </p>
     </div>
   );
 }

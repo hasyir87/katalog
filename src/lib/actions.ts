@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { getDb } from '@/firebase/server-init';
 import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
-import type { User } from 'firebase/auth';
+import type { User as FirebaseAuthUser } from 'firebase/auth'; // Renamed to avoid conflict
 import { allowedUsers } from './auth-allowlist';
 
 const perfumeSchema = z.object({
@@ -26,28 +26,36 @@ const perfumeSchema = z.object({
 
 // --- User Actions ---
 
-export async function getOrCreateUser(user: User): Promise<boolean> {
+export async function getOrCreateUser(user: FirebaseAuthUser): Promise<boolean> {
   try {
-    // Explicitly check if the user's email is in the allowlist.
+    // 1. Security Check: Is the user's email even in the allowlist?
     if (!user.email || !allowedUsers.includes(user.email)) {
-      console.log(`Authorization denied for email: ${user.email}`);
+      console.log(`Authorization denied for email not in allowlist: ${user.email}`);
       return false;
     }
     
-    // If they are in the allowlist, proceed to check Firestore.
+    // 2. Database Check: Does the user have a profile document?
     const db = await getDb();
     const userRef = db.collection('users').doc(user.uid);
     const userDoc = await userRef.get();
 
     if (userDoc.exists) {
       console.log(`Authorization successful for existing user: ${user.email}`);
-      return true;
+      return true; // User exists and is allowed.
     } else {
-      console.warn(`User document not found for allowed user: ${user.email}. Access will be denied until profile is created.`);
-      return false;
+      // This case can happen if registration succeeded in Auth but failed to write to Firestore.
+      // Or if it's the very first login after registration. Let's ensure the doc exists.
+      console.warn(`User document not found for allowed user: ${user.email}. Creating it now.`);
+      await userRef.set({
+        displayName: user.displayName,
+        email: user.email,
+      });
+      // After creating, we can consider them authorized for this session.
+      return true;
     }
   } catch (error: any) {
     console.error("Error in getOrCreateUser:", error.message);
+    // Any error in this critical function should result in denial of access.
     return false;
   }
 }
@@ -63,8 +71,6 @@ export async function getPerfumes(): Promise<Perfume[]> {
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
     } catch (error: any) {
         console.error("Error fetching perfumes: ", error.message);
-        // Return an empty array on error to prevent the app from crashing.
-        // The console error will indicate the underlying problem.
         return [];
     }
 }
