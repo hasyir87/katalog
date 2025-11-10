@@ -9,7 +9,6 @@ import type { User as FirebaseAuthUser } from 'firebase/auth'; // Renamed to avo
 import { allowedUsers } from './auth-allowlist';
 
 const perfumeSchema = z.object({
-  number: z.coerce.number().int().positive(),
   namaParfum: z.string().min(2, 'Name must be at least 2 characters long.'),
   deskripsiParfum: z.string().min(10, 'Description must be at least 10 characters long.'),
   topNotes: z.string().min(2, 'Top notes are required.'),
@@ -96,15 +95,25 @@ export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
   }
 }
 
-export async function addPerfume(data: Omit<Perfume, 'id' | 'imageUrl'>) {
+export async function addPerfume(data: Omit<Perfume, 'id' | 'imageUrl' | 'number'>) {
   const validatedData = perfumeSchema.parse(data);
-  const dataToSave = {
-    ...validatedData,
-    imageUrl: `https://picsum.photos/seed/perfume${validatedData.number}/400/600`,
-  }
+  const db = await getDb();
+  const perfumesCollection = db.collection('perfumes');
+  
   try {
-    const db = await getDb();
-    const perfumesCollection = db.collection('perfumes');
+    // Get the highest existing number
+    const lastPerfumeQuery = await perfumesCollection.orderBy('number', 'desc').limit(1).get();
+    let newNumber = 1;
+    if (!lastPerfumeQuery.empty) {
+      newNumber = lastPerfumeQuery.docs[0].data().number + 1;
+    }
+
+    const dataToSave = {
+      ...validatedData,
+      number: newNumber,
+      imageUrl: `https://picsum.photos/seed/perfume${newNumber}/400/600`,
+    }
+
     const docRef = await perfumesCollection.add(dataToSave);
     revalidatePath('/');
     revalidatePath('/dashboard');
@@ -174,13 +183,12 @@ export async function addPerfumesBatch(data: any[]) {
     return { successCount, errors };
 }
 
-export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id' | 'imageUrl'>>) {
-  const validatedData = perfumeSchema.partial().parse(data);
+export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id' | 'imageUrl' | 'number'>>) {
+  // Use `passthrough` to allow other fields (like `number`) to exist on the object, but they won't be validated or used.
+  const validatedData = perfumeSchema.partial().passthrough().parse(data);
   
-  const dataToSave: Partial<Perfume> = { ...validatedData };
-  if(validatedData.number) {
-    dataToSave.imageUrl = `https://picsum.photos/seed/perfume${validatedData.number}/400/600`
-  }
+  // We only want to save the validated fields from our schema, excluding any 'number' field that might be passed.
+  const { number, ...dataToSave } = validatedData;
 
   try {
     const db = await getDb();

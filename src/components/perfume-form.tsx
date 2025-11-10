@@ -25,7 +25,6 @@ import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
 const perfumeSchema = z.object({
-  number: z.coerce.number().int().positive(),
   namaParfum: z.string().min(2, 'Name must be at least 2 characters long.'),
   deskripsiParfum: z.string().min(10, 'Description must be at least 10 characters long.'),
   topNotes: z.string().min(2, 'Top notes are required.'),
@@ -53,9 +52,7 @@ export function PerfumeForm({ perfume }: PerfumeFormProps) {
     resolver: zodResolver(perfumeSchema),
     defaultValues: perfume ? {
       ...perfume,
-      number: perfume.number || 0,
     } : {
-      number: 0,
       namaParfum: '',
       deskripsiParfum: '',
       topNotes: '',
@@ -101,22 +98,13 @@ export function PerfumeForm({ perfume }: PerfumeFormProps) {
         <CardContent>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <FormField control={form.control} name="namaParfum" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Nama Parfum</FormLabel>
-                                <FormControl><Input placeholder="e.g., Midnight Bloom" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                        <FormField control={form.control} name="number" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Nomor</FormLabel>
-                                <FormControl><Input type="number" placeholder="e.g., 1" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                    </div>
+                    <FormField control={form.control} name="namaParfum" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Nama Parfum</FormLabel>
+                            <FormControl><Input placeholder="e.g., Midnight Bloom" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
                     <FormField control={form.control} name="deskripsiParfum" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Deskripsi Parfum</FormLabel>
@@ -154,8 +142,8 @@ export function PerfumeForm({ perfume }: PerfumeFormProps) {
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl><SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger></FormControl>
                                     <SelectContent>
-                                        <SelectItem value="Female">Female</SelectItem>
-                                        <SelectItem value="Male">Male</SelectItem>
+                                        <SelectItem value="Female">Wanita</SelectItem>
+                                        <SelectItem value="Male">Pria</SelectItem>
                                         <SelectItem value="Unisex">Unisex</SelectItem>
                                     </SelectContent>
                                 </Select>
