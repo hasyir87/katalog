@@ -8,15 +8,11 @@ service cloud.firestore {
     }
 
     match /perfumes/{perfumeId} {
-      // Allow anyone to get a single perfume document
-      allow get: if true;
+      // Allow anyone to read (get) a single perfume document or list the whole collection.
+      allow read: if true;
+      
       // Only allow signed-in users to write (create, update, delete)
       allow write: if isSignedIn();
-    }
-
-    match /perfumes {
-        // Allow anyone to list the perfume collection
-        allow list: if true;
     }
     
     match /users/{userId} {
