@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { useAuth as useFirebaseAuth } from '@/firebase';
+import { useAuth as useFirebaseAuth, useFirestore } from '@/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
@@ -16,6 +17,7 @@ import Link from 'next/link';
 export default function RegisterPage() {
   const router = useRouter();
   const auth = useFirebaseAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
@@ -24,11 +26,11 @@ export default function RegisterPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth) {
+    if (!auth || !firestore) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Layanan autentikasi tidak tersedia.",
+        description: "Layanan autentikasi atau database tidak tersedia.",
       });
       return;
     }
@@ -43,9 +45,20 @@ export default function RegisterPage() {
 
     setIsLoading(true);
     try {
+      // 1. Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(userCredential.user, { displayName });
+      const user = userCredential.user;
+
+      // 2. Update the profile in Firebase Auth (optional, but good practice)
+      await updateProfile(user, { displayName });
       
+      // 3. Create user profile document in Firestore
+      const userDocRef = doc(firestore, "users", user.uid);
+      await setDoc(userDocRef, {
+        displayName: displayName,
+        email: user.email,
+      });
+
       toast({
         title: "Registrasi Berhasil",
         description: "Akun Anda telah dibuat. Silakan login.",

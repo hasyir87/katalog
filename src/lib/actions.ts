@@ -5,7 +5,6 @@ import { getDb } from '@/firebase/server-init';
 import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
 import type { User } from 'firebase/auth';
-import { getFirestore } from 'firebase-admin/firestore';
 
 const perfumeSchema = z.object({
   number: z.coerce.number().int().positive(),
@@ -25,10 +24,19 @@ const perfumeSchema = z.object({
 
 // --- User Actions ---
 
-export async function getOrCreateUser(user: User) {
-  // This is a temporary diagnostic function. It bypasses Firestore to test the auth flow.
-  // It should always resolve successfully.
-  return Promise.resolve();
+export async function getOrCreateUser(user: User): Promise<void> {
+  const db = await getDb();
+  const userRef = db.collection('users').doc(user.uid);
+  const userDoc = await userRef.get();
+
+  if (userDoc.exists) {
+    // User document already exists, no action needed.
+    return Promise.resolve();
+  } else {
+    // This case should ideally not happen if registration page is working correctly,
+    // but as a fallback, let's throw an error.
+    throw new Error("User profile does not exist in Firestore.");
+  }
 }
 
 
@@ -44,7 +52,7 @@ export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
     return undefined;
   } catch (error: any) {
     console.error("Error fetching perfume by ID: ", error.message);
-    return undefined;
+    throw new Error(`Failed to fetch perfume: ${error.message}`);
   }
 }
 
@@ -57,7 +65,7 @@ export async function getPerfumesByAroma(aroma: string): Promise<Perfume[]> {
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
     } catch (error: any) {
         console.error("Error fetching perfumes by aroma: ", error.message);
-        return [];
+        throw new Error(`Failed to fetch perfumes by aroma: ${error.message}`);
     }
 }
 
@@ -105,7 +113,6 @@ export async function deletePerfume(id: string) {
     if (docSnap.exists) {
         const perfume = docSnap.data() as Perfume;
 
-        // Protection Logic: Prevent deletion of perfume with number 1
         if (perfume.number === 1) {
             throw new Error('This perfume is protected and cannot be deleted.');
         }
@@ -122,7 +129,6 @@ export async function deletePerfume(id: string) {
     }
   } catch (error: any) {
      console.error("Error deleting perfume: ", error.message);
-     // Re-throw the original error message, whether it's from our protection logic or Firestore
      throw new Error(error.message || 'Failed to delete perfume.');
   }
 }
