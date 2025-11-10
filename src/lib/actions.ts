@@ -4,11 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { getDb } from '@/firebase/server-init';
 import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
-import type { User } from 'firebase/auth'; // This is client-side, but only used for its type, which is fine.
-
-// Use Firestore Admin SDK functions.
+import type { User } from 'firebase/auth';
 import { getFirestore } from 'firebase-admin/firestore';
-
 
 const perfumeSchema = z.object({
   number: z.coerce.number().int().positive(),
@@ -40,8 +37,7 @@ export async function getOrCreateUser(user: User) {
 export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
   try {
     const db = await getDb();
-    const docRef = db.collection('perfumes').doc(id);
-    const docSnap = await docRef.get();
+    const docSnap = await db.collection('perfumes').doc(id).get();
     if (docSnap.exists) {
       return { id: docSnap.id, ...docSnap.data() } as Perfume;
     }
@@ -51,21 +47,6 @@ export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
     return undefined;
   }
 }
-
-export async function getPerfumes(): Promise<Perfume[]> {
-    try {
-        const db = await getDb();
-        const perfumesCollection = db.collection('perfumes');
-        const snapshot = await perfumesCollection.get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
-    } catch (error: any) {
-        console.error("Error fetching perfumes: ", error.message);
-        // Return an empty array on error to prevent the app from crashing.
-        // The console error will indicate the underlying problem.
-        return [];
-    }
-}
-
 
 export async function getPerfumesByAroma(aroma: string): Promise<Perfume[]> {
     try {
