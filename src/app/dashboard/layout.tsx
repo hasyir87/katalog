@@ -80,8 +80,9 @@ export default function DashboardLayout({
     return () => {
       isMounted = false;
     };
-    // This effect depends ONLY on the user object and its loading state.
-    // It does not depend on its own state `authState`, preventing loops.
+    // This effect depends on the user object, its loading state, and its own authState.
+    // The key is that `verifyUser` is only called when authState is 'verifying',
+    // preventing a loop if signOut causes a re-render.
   }, [user, isUserLoading, auth, router, toast, authState]);
 
   // Render content based on the authorization state
