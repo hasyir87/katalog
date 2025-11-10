@@ -6,7 +6,6 @@
 export const allowedUsers: string[] = [
   // Add your email here, for example:
   // "admin@example.com",
-  // "user1@example.com",
   "hasyir87@gmail.com",
   "hasyir87@hotmail.com",
 ];
