@@ -5,6 +5,7 @@ import { getDb } from '@/firebase/server-init';
 import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
 import type { User } from 'firebase/auth';
+import { allowedUsers } from './auth-allowlist';
 
 const perfumeSchema = z.object({
   number: z.coerce.number().int().positive(),
@@ -24,23 +25,48 @@ const perfumeSchema = z.object({
 
 // --- User Actions ---
 
-export async function getOrCreateUser(user: User): Promise<void> {
+export async function getOrCreateUser(user: User): Promise<boolean> {
+  // Explicitly check if the user's email is in the allowlist.
+  if (!user.email || !allowedUsers.includes(user.email)) {
+    console.log(`Authorization denied for email: ${user.email}`);
+    return false;
+  }
+  
+  // If they are in the allowlist, proceed to check Firestore.
   const db = await getDb();
   const userRef = db.collection('users').doc(user.uid);
   const userDoc = await userRef.get();
 
   if (userDoc.exists) {
-    // User document already exists, no action needed.
-    return Promise.resolve();
+    // User exists and is in the allowlist.
+    console.log(`Authorization successful for existing user: ${user.email}`);
+    return true;
   } else {
-    // This case should ideally not happen if registration page is working correctly,
-    // but as a fallback, let's throw an error.
-    throw new Error("User profile does not exist in Firestore.");
+    // This case can happen if a user is in the allowlist but hasn't registered yet.
+    // The registration flow should handle creation. For dashboard access,
+    // we strictly require the document to exist.
+    console.error(`User document not found for allowed user: ${user.email}. Access denied.`);
+    return false;
   }
 }
 
 
 // --- Perfume Actions ---
+
+export async function getPerfumes(): Promise<Perfume[]> {
+  try {
+    const db = await getDb();
+    const perfumesCollection = db.collection('perfumes');
+    const snapshot = await perfumesCollection.get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
+  } catch (error: any) {
+    console.error("Error fetching perfumes: ", error.message);
+    // Return an empty array on error to prevent the app from crashing.
+    // The console error will indicate the underlying problem.
+    return [];
+  }
+}
+
 
 export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
   try {

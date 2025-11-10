@@ -18,7 +18,6 @@ export default function DashboardLayout({
   const router = useRouter();
   const { toast } = useToast();
 
-  // 'verifying' | 'authorized' | 'unauthorized'
   const [authState, setAuthState] = useState<'verifying' | 'authorized' | 'unauthorized'>('verifying');
 
   useEffect(() => {
@@ -36,32 +35,43 @@ export default function DashboardLayout({
     }
 
     // If there is a user, check if they are authorized.
-    // This only runs once when the user object is first available.
     let isMounted = true;
     
     getOrCreateUser(user)
-      .then(() => {
+      .then((isAuthorized) => {
         if (isMounted) {
-          // If the promise resolves, the user is authorized.
-          setAuthState('authorized');
+          if (isAuthorized) {
+            setAuthState('authorized');
+          } else {
+             // User is not in the allowlist
+            toast({
+              variant: "destructive",
+              title: "Akses Ditolak",
+              description: "Anda tidak memiliki izin untuk melihat halaman ini.",
+            });
+            if (auth) {
+              signOut(auth);
+            }
+            setAuthState('unauthorized');
+            router.replace('/login');
+          }
         }
       })
       .catch((error: any) => {
         if (isMounted) {
-          // If it rejects, the user is not authorized.
-          console.error("Authorization check failed:", error.message);
+          // This might happen for network errors or other unexpected issues
+          console.error("Authorization check failed unexpectedly:", error.message);
           toast({
             variant: "destructive",
-            title: "Akses Ditolak",
-            description: "Anda tidak memiliki izin untuk melihat halaman ini.",
+            title: "Error Verifikasi",
+            description: "Gagal memverifikasi otorisasi Anda. Silakan coba lagi.",
           });
           
           if (auth) {
-            signOut(auth); // Sign out the unauthorized user
+            signOut(auth);
           }
           setAuthState('unauthorized');
-          // The state change from signOut will be handled by the `!user` check above
-          // in a subsequent render, redirecting to login.
+          router.replace('/login');
         }
       });
       
