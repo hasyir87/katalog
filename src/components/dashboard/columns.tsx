@@ -100,6 +100,26 @@ export const columns: ColumnDef<Perfume>[] = [
       );
     },
   },
+   {
+    accessorKey: 'deskripsiParfum',
+    header: 'Deskripsi',
+    cell: ({ row }) => <div className="whitespace-normal max-w-[250px] align-top">{row.original.deskripsiParfum}</div>
+  },
+   {
+    accessorKey: 'topNotes',
+    header: 'Top Notes',
+    cell: ({ row }) => <div className="whitespace-normal max-w-[150px] align-top">{row.original.topNotes}</div>
+  },
+  {
+    accessorKey: 'middleNotes',
+    header: 'Middle Notes',
+    cell: ({ row }) => <div className="whitespace-normal max-w-[150px] align-top">{row.original.middleNotes}</div>
+  },
+  {
+    accessorKey: 'baseNotes',
+    header: 'Base Notes',
+    cell: ({ row }) => <div className="whitespace-normal max-w-[150px] align-top">{row.original.baseNotes}</div>
+  },
   {
     accessorKey: 'jenisAroma',
     header: 'Jenis Aroma',
