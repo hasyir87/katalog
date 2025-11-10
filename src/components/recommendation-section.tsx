@@ -34,7 +34,7 @@ const mapAiPerfumeToPerfume = (aiPerfume: RecommendPerfumeOutput['recommendation
     sex: aiPerfume.Sex as 'Male' | 'Female' | 'Unisex',
     lokasi: aiPerfume.Lokasi,
     jenisAroma: aiPerfume.Jenis_Aroma,
-    kualitas: aiPerfume.Kualitas,
+    kualitas: aiPerfume.Kualitas as 'Premium' | 'Extrait',
     // The AI output doesn't include an image, so we'll use a default
     imageUrl: `https://picsum.photos/seed/${aiPerfume.Number}/400/600`,
 });
