@@ -42,31 +42,16 @@ export async function getOrCreateUser(user: User): Promise<boolean> {
     console.log(`Authorization successful for existing user: ${user.email}`);
     return true;
   } else {
-    // If user is in the allowlist but has no doc, maybe registration failed.
+    // If user is in the allowlist but has no doc, it means registration didn't complete.
     // The login flow should not create a user, only the registration flow.
     // So if the doc doesn't exist at login, they are not fully authorized.
-    console.error(`User document not found for allowed user: ${user.email}. Access denied.`);
+    console.warn(`User document not found for allowed user: ${user.email}. Access denied.`);
     return false;
   }
 }
 
 
 // --- Perfume Actions ---
-
-export async function getPerfumes(): Promise<Perfume[]> {
-  try {
-    const db = await getDb();
-    const perfumesCollection = db.collection('perfumes');
-    const snapshot = await perfumesCollection.get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
-  } catch (error: any) {
-    console.error("Error fetching perfumes: ", error.message);
-    // Return an empty array on error to prevent the app from crashing.
-    // The console error will indicate the underlying problem.
-    return [];
-  }
-}
-
 
 export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
   try {
@@ -81,20 +66,6 @@ export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
     throw new Error(`Failed to fetch perfume: ${error.message}`);
   }
 }
-
-export async function getPerfumesByAroma(aroma: string): Promise<Perfume[]> {
-    try {
-        const db = await getDb();
-        const perfumesCollection = db.collection('perfumes');
-        const q = perfumesCollection.where("jenisAroma", "==", aroma);
-        const snapshot = await q.get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
-    } catch (error: any) {
-        console.error("Error fetching perfumes by aroma: ", error.message);
-        throw new Error(`Failed to fetch perfumes by aroma: ${error.message}`);
-    }
-}
-
 
 export async function addPerfume(data: Omit<Perfume, 'id'>) {
   const validatedData = perfumeSchema.parse(data);

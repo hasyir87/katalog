@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -55,7 +54,7 @@ export default function DashboardLayout({
               await signOut(auth);
             }
             setAuthState('unauthorized');
-            // No need to router.replace here, the change in user state will trigger it.
+            // The user state change will trigger the redirect.
           }
         }
       } catch (error: any) {
@@ -96,6 +95,7 @@ export default function DashboardLayout({
   }
 
   // For 'unauthorized' state. The effect already handles redirection.
+  // We show a loading spinner while the redirect is happening.
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
       <Loader2 className="h-8 w-8 animate-spin text-destructive" />
