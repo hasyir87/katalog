@@ -23,39 +23,45 @@ const perfumeSchema = z.object({
   imageUrl: z.string().url('Must be a valid URL.').optional().or(z.literal('')),
 });
 
+const perfumeImportSchema = z.object({
+  No: z.coerce.number().int().positive(),
+  'Nama Parfum': z.string().min(2),
+  'Deskripsi Parfum': z.string().min(10),
+  'Top Notes': z.string(),
+  'Middle Notes': z.string(),
+  'Base Notes': z.string(),
+  Penggunaan: z.string(),
+  Sex: z.enum(['Pria', 'Wanita', 'Unisex']),
+  Lokasi: z.string(),
+  'Jenis Aroma': z.string(),
+  Kualitas: z.string(),
+});
+
 
 // --- User Actions ---
 
 export async function getOrCreateUser(user: FirebaseAuthUser): Promise<boolean> {
   try {
-    // 1. Security Check: Is the user's email even in the allowlist?
     if (!user.email || !allowedUsers.includes(user.email)) {
       console.log(`Authorization denied for email not in allowlist: ${user.email}`);
       return false;
     }
     
-    // 2. Database Check: Does the user have a profile document?
     const db = await getDb();
     const userRef = db.collection('users').doc(user.uid);
     const userDoc = await userRef.get();
 
     if (userDoc.exists) {
-      console.log(`Authorization successful for existing user: ${user.email}`);
-      return true; // User exists and is allowed.
+      return true;
     } else {
-      // This case can happen if registration succeeded in Auth but failed to write to Firestore.
-      // Or if it's the very first login after registration. Let's ensure the doc exists.
-      console.warn(`User document not found for allowed user: ${user.email}. Creating it now.`);
       await userRef.set({
         displayName: user.displayName,
         email: user.email,
       });
-      // After creating, we can consider them authorized for this session.
       return true;
     }
   } catch (error: any) {
     console.error("Error in getOrCreateUser:", error.message);
-    // Any error in this critical function should result in denial of access.
     return false;
   }
 }
@@ -67,11 +73,11 @@ export async function getPerfumes(): Promise<Perfume[]> {
     try {
         const db = await getDb();
         const perfumesCollection = db.collection('perfumes');
-        const snapshot = await perfumesCollection.get();
+        const snapshot = await perfumesCollection.orderBy('number').get();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
     } catch (error: any) {
         console.error("Error fetching perfumes: ", error.message);
-        return [];
+        throw new Error(`Failed to fetch perfumes: ${error.message}`);
     }
 }
 
@@ -105,6 +111,48 @@ export async function addPerfume(data: Omit<Perfume, 'id'>) {
   }
 }
 
+export async function addPerfumesBatch(data: any[]) {
+    const db = await getDb();
+    const batch = db.batch();
+
+    let successCount = 0;
+    const errors: string[] = [];
+
+    data.forEach((item, index) => {
+        const result = perfumeImportSchema.safeParse(item);
+        if (result.success) {
+            const perfumeData = {
+                number: result.data.No,
+                namaParfum: result.data['Nama Parfum'],
+                deskripsiParfum: result.data['Deskripsi Parfum'],
+                topNotes: result.data['Top Notes'],
+                middleNotes: result.data['Middle Notes'],
+                baseNotes: result.data['Base Notes'],
+                penggunaan: result.data.Penggunaan,
+                sex: result.data.Sex === 'Pria' ? 'Male' : (result.data.Sex === 'Wanita' ? 'Female' : 'Unisex'),
+                lokasi: result.data.Lokasi,
+                jenisAroma: result.data['Jenis Aroma'],
+                kualitas: result.data.Kualitas,
+                imageUrl: `https://picsum.photos/seed/perfume${result.data.No}/400/600`,
+            };
+            const docRef = db.collection('perfumes').doc(); // Auto-generate ID
+            batch.set(docRef, perfumeData);
+            successCount++;
+        } else {
+             errors.push(`Row ${index + 2}: ${result.error.issues.map(i => i.message).join(', ')}`);
+        }
+    });
+
+    if (successCount > 0) {
+        await batch.commit();
+    }
+
+    revalidatePath('/');
+    revalidatePath('/dashboard');
+
+    return { successCount, errors };
+}
+
 export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'>>) {
   const validatedData = perfumeSchema.partial().parse(data);
   
@@ -132,11 +180,6 @@ export async function deletePerfume(id: string) {
 
     if (docSnap.exists) {
         const perfume = docSnap.data() as Perfume;
-
-        if (perfume.number === 1) {
-            throw new Error('This perfume is protected and cannot be deleted.');
-        }
-
         await docRef.delete();
         revalidatePath('/');
         revalidatePath('/dashboard');
