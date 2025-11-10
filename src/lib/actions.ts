@@ -101,16 +101,16 @@ export async function addPerfume(data: Omit<Perfume, 'id' | 'imageUrl' | 'number
   const perfumesCollection = db.collection('perfumes');
   
   try {
-    // Get the highest existing number
-    const lastPerfumeQuery = await perfumesCollection.orderBy('number', 'desc').limit(1).get();
-    let newNumber = 1;
-    if (!lastPerfumeQuery.empty) {
-      const lastPerfume = lastPerfumeQuery.docs[0].data();
-      // Safely check if number exists and is a number
-      if (lastPerfume && typeof lastPerfume.number === 'number') {
-        newNumber = lastPerfume.number + 1;
-      }
-    }
+    // Robustly find the next number
+    const allPerfumesSnapshot = await perfumesCollection.get();
+    let highestNumber = 0;
+    allPerfumesSnapshot.forEach(doc => {
+        const perfume = doc.data();
+        if (perfume && typeof perfume.number === 'number' && perfume.number > highestNumber) {
+            highestNumber = perfume.number;
+        }
+    });
+    const newNumber = highestNumber + 1;
 
     const dataToSave = {
       ...validatedData,
@@ -235,3 +235,4 @@ export async function deletePerfume(id: string) {
      throw new Error(error.message || 'Failed to delete perfume.');
   }
 }
+
