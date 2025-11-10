@@ -36,9 +36,10 @@ export default function DashboardLayout({
 
     // If there is a user, check if they are authorized.
     let isMounted = true;
-    
-    getOrCreateUser(user)
-      .then((isAuthorized) => {
+
+    const verifyUser = async () => {
+      try {
+        const isAuthorized = await getOrCreateUser(user);
         if (isMounted) {
           if (isAuthorized) {
             setAuthState('authorized');
@@ -50,14 +51,13 @@ export default function DashboardLayout({
               description: "Anda tidak memiliki izin untuk melihat halaman ini.",
             });
             if (auth) {
-              signOut(auth);
+              await signOut(auth);
             }
             setAuthState('unauthorized');
             router.replace('/login');
           }
         }
-      })
-      .catch((error: any) => {
+      } catch (error: any) {
         if (isMounted) {
           // This might happen for network errors or other unexpected issues
           console.error("Authorization check failed unexpectedly:", error.message);
@@ -68,12 +68,15 @@ export default function DashboardLayout({
           });
           
           if (auth) {
-            signOut(auth);
+            await signOut(auth);
           }
           setAuthState('unauthorized');
           router.replace('/login');
         }
-      });
+      }
+    };
+    
+    verifyUser();
       
     return () => {
       isMounted = false;
