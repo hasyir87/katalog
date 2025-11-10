@@ -72,7 +72,7 @@ export async function getPerfumes(): Promise<Perfume[]> {
     try {
         const db = await getDb();
         const perfumesCollection = db.collection('perfumes');
-        const snapshot = await perfumesCollection.orderBy('namaParfum').get(); // Sorting by name as number might not exist
+        const snapshot = await perfumesCollection.orderBy('namaParfum').get();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
     } catch (error: any) {
         console.error("Error fetching perfumes: ", error.message);
@@ -101,7 +101,6 @@ export async function addPerfume(data: Omit<Perfume, 'id' | 'imageUrl' | 'number
   const perfumesCollection = db.collection('perfumes');
   
   try {
-    // Robustly find the next number
     const allPerfumesSnapshot = await perfumesCollection.get();
     let highestNumber = 0;
     allPerfumesSnapshot.forEach(doc => {
@@ -116,14 +115,14 @@ export async function addPerfume(data: Omit<Perfume, 'id' | 'imageUrl' | 'number
       ...validatedData,
       number: newNumber,
       imageUrl: `https://picsum.photos/seed/perfume${newNumber}/400/600`,
-    }
+    };
 
     const docRef = await perfumesCollection.add(dataToSave);
     revalidatePath('/');
     revalidatePath('/dashboard');
     return { id: docRef.id, ...dataToSave };
   } catch (error: any) {
-     console.error("Error adding perfume: ", error.message);
+     console.error("Error adding perfume: ", error);
      throw new Error('Failed to add perfume.');
   }
 }
@@ -138,7 +137,6 @@ export async function addPerfumesBatch(data: any[]) {
     const plainData = JSON.parse(JSON.stringify(data));
 
     plainData.forEach((item: any, index: number) => {
-        // We manually map to handle potential missing optional fields from Excel
         const mappedItem = {
             'No': item.No,
             'Nama Parfum': item['Nama Parfum'],
@@ -190,10 +188,8 @@ export async function addPerfumesBatch(data: any[]) {
 }
 
 export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id' | 'imageUrl' | 'number'>>) {
-  // Use `passthrough` to allow other fields (like `number`) to exist on the object, but they won't be validated or used.
   const validatedData = perfumeSchema.passthrough().parse(data);
   
-  // We only want to save the validated fields from our schema, excluding any 'number' field that might be passed.
   const { number, ...dataToSave } = validatedData as any;
 
   try {
@@ -235,4 +231,3 @@ export async function deletePerfume(id: string) {
      throw new Error(error.message || 'Failed to delete perfume.');
   }
 }
-

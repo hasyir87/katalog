@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -9,56 +10,62 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { RecommendPerfumeInputSchema, RecommendPerfumeOutputSchema, PerfumeSchema, type RecommendPerfumeInput, type RecommendPerfumeOutput } from '@/ai/schema/perfume-recommendation-schema';
+import { getDb } from '@/firebase/server-init';
+import type { Perfume } from '@/lib/types';
 
 
 const getRelevantPerfumes = ai.defineTool({
   name: 'getRelevantPerfumes',
   description: 'Retrieves perfumes from the database based on the user provided query.',
   inputSchema: z.object({
-    query: z.string().describe('The user query to find perfumes based on preference.'),
+    query: z.string().describe('The user query to find perfumes based on preference. Can be about scent, occasion, gender, or quality.'),
   }),
   outputSchema: z.array(PerfumeSchema),
 }, async (input) => {
-  // TODO: Implement the database retrieval logic here
-  // Replace this with actual data retrieval from the database
-  const mockPerfumes: z.infer<typeof PerfumeSchema>[] = [
-    {
-      Number: 1,
-      Nama_Parfum: 'Rose Delight',
-      Deskripsi_Parfum: 'A floral fragrance with a hint of spice.',
-      Top_Notes: 'Rose, Bergamot',
-      Middle_Notes: 'Jasmine, Violet',
-      Base_Notes: 'Sandalwood, Musk',
-      Penggunaan: 'Daytime',
-      Sex: 'Female',
-      Lokasi: 'Office',
-      Jenis_Aroma: 'Floral',
-      Kualitas: 'High',
-    },
-    {
-      Number: 2,
-      Nama_Parfum: 'Ocean Breeze',
-      Deskripsi_Parfum: 'A refreshing aquatic fragrance.',
-      Top_Notes: 'Sea Salt, Lemon',
-      Middle_Notes: 'Marine Accord, Lavender',
-      Base_Notes: 'Driftwood, Ambergris',
-      Penggunaan: 'Casual',
-      Sex: 'Male',
-      Lokasi: 'Beach',
-      Jenis_Aroma: 'Aquatic',
-      Kualitas: 'Medium',
-    },
-  ];
+  try {
+    const db = await getDb();
+    const perfumesCollection = db.collection('perfumes');
+    const snapshot = await perfumesCollection.get();
+    const allPerfumes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
 
-  // Filter perfumes based on the query (simple example, refine as needed)
-  const filteredPerfumes = mockPerfumes.filter(perfume =>
-    perfume.Deskripsi_Parfum.toLowerCase().includes(input.query.toLowerCase()) ||
-    perfume.Top_Notes.toLowerCase().includes(input.query.toLowerCase()) ||
-    perfume.Middle_Notes.toLowerCase().includes(input.query.toLowerCase()) ||
-    perfume.Base_Notes.toLowerCase().includes(input.query.toLowerCase())
-  );
+    // For simplicity, we'll do a basic text search across relevant fields.
+    // A more advanced implementation might use embeddings or more complex queries.
+    const query = input.query.toLowerCase();
+    const filteredPerfumes = allPerfumes.filter(p => {
+      const combinedText = [
+        p.namaParfum,
+        p.deskripsiParfum,
+        p.topNotes,
+        p.middleNotes,
+        p.baseNotes,
+        p.jenisAroma,
+        p.penggunaan,
+        p.lokasi,
+        p.sex,
+        p.kualitas,
+      ].join(' ').toLowerCase();
+      return combinedText.includes(query);
+    });
 
-  return filteredPerfumes;
+    // Map to the AI schema, ensuring all fields are strings or numbers as defined.
+    return filteredPerfumes.map(p => ({
+        Number: p.number,
+        Nama_Parfum: p.namaParfum,
+        Deskripsi_Parfum: p.deskripsiParfum,
+        Top_Notes: p.topNotes,
+        Middle_Notes: p.middleNotes,
+        Base_Notes: p.baseNotes,
+        Penggunaan: p.penggunaan,
+        Sex: p.sex,
+        Lokasi: p.lokasi,
+        Jenis_Aroma: p.jenisAroma,
+        Kualitas: p.kualitas,
+    }));
+  } catch (error) {
+    console.error("Error fetching perfumes for AI tool:", error);
+    // Return empty array on error to prevent AI flow from crashing.
+    return [];
+  }
 });
 
 export async function recommendPerfume(input: RecommendPerfumeInput): Promise<RecommendPerfumeOutput> {
@@ -76,7 +83,8 @@ const prompt = ai.definePrompt({
 
   User Query: {{{query}}}
 
-  Return the recommendations in the requested JSON format.
+  After getting the results from the tool, analyze them and return the top 4 most relevant recommendations to the user in the requested JSON format.
+  If no relevant perfumes are found, return an empty array for recommendations.
   `,
 });
 
