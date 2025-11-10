@@ -72,7 +72,7 @@ export async function getPerfumes(): Promise<Perfume[]> {
     try {
         const db = await getDb();
         const perfumesCollection = db.collection('perfumes');
-        const snapshot = await perfumesCollection.orderBy('number').get();
+        const snapshot = await perfumesCollection.orderBy('namaParfum').get(); // Sorting by name as number might not exist
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
     } catch (error: any) {
         console.error("Error fetching perfumes: ", error.message);
@@ -105,7 +105,11 @@ export async function addPerfume(data: Omit<Perfume, 'id' | 'imageUrl' | 'number
     const lastPerfumeQuery = await perfumesCollection.orderBy('number', 'desc').limit(1).get();
     let newNumber = 1;
     if (!lastPerfumeQuery.empty) {
-      newNumber = lastPerfumeQuery.docs[0].data().number + 1;
+      const lastPerfume = lastPerfumeQuery.docs[0].data();
+      // Safely check if number exists and is a number
+      if (lastPerfume && typeof lastPerfume.number === 'number') {
+        newNumber = lastPerfume.number + 1;
+      }
     }
 
     const dataToSave = {
