@@ -20,7 +20,6 @@ const perfumeSchema = z.object({
   lokasi: z.string().min(2, 'Location/Occasion is required.'),
   jenisAroma: z.string().min(2, 'Scent type is required.'),
   kualitas: z.string().min(2, 'Quality is required.'),
-  imageUrl: z.string().url('Must be a valid URL.').optional().or(z.literal('')),
 });
 
 const perfumeImportSchema = z.object({
@@ -35,6 +34,7 @@ const perfumeImportSchema = z.object({
   Lokasi: z.string(),
   'Jenis Aroma': z.string(),
   Kualitas: z.string(),
+  'Image URL': z.string().url().optional().or(z.literal('')),
 });
 
 
@@ -96,15 +96,19 @@ export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
   }
 }
 
-export async function addPerfume(data: Omit<Perfume, 'id'>) {
+export async function addPerfume(data: Omit<Perfume, 'id' | 'imageUrl'>) {
   const validatedData = perfumeSchema.parse(data);
+  const dataToSave = {
+    ...validatedData,
+    imageUrl: `https://picsum.photos/seed/perfume${validatedData.number}/400/600`,
+  }
   try {
     const db = await getDb();
     const perfumesCollection = db.collection('perfumes');
-    const docRef = await perfumesCollection.add(validatedData);
+    const docRef = await perfumesCollection.add(dataToSave);
     revalidatePath('/');
     revalidatePath('/dashboard');
-    return { id: docRef.id, ...validatedData };
+    return { id: docRef.id, ...dataToSave };
   } catch (error: any) {
      console.error("Error adding perfume: ", error.message);
      throw new Error('Failed to add perfume.');
@@ -119,7 +123,24 @@ export async function addPerfumesBatch(data: any[]) {
     const errors: string[] = [];
 
     data.forEach((item, index) => {
-        const result = perfumeImportSchema.safeParse(item);
+        // We manually map to handle potential missing optional fields from Excel
+        const mappedItem = {
+            'No': item.No,
+            'Nama Parfum': item['Nama Parfum'],
+            'Deskripsi Parfum': item['Deskripsi Parfum'],
+            'Top Notes': item['Top Notes'],
+            'Middle Notes': item['Middle Notes'],
+            'Base Notes': item['Base Notes'],
+            'Penggunaan': item.Penggunaan,
+            'Sex': item.Sex,
+            'Lokasi': item.Lokasi,
+            'Jenis Aroma': item['Jenis Aroma'],
+            'Kualitas': item.Kualitas,
+            'Image URL': item['Image URL'] || `https://picsum.photos/seed/perfume${item.No}/400/600`,
+        };
+
+        const result = perfumeImportSchema.safeParse(mappedItem);
+
         if (result.success) {
             const perfumeData = {
                 number: result.data.No,
@@ -133,13 +154,13 @@ export async function addPerfumesBatch(data: any[]) {
                 lokasi: result.data.Lokasi,
                 jenisAroma: result.data['Jenis Aroma'],
                 kualitas: result.data.Kualitas,
-                imageUrl: `https://picsum.photos/seed/perfume${result.data.No}/400/600`,
+                imageUrl: result.data['Image URL'],
             };
             const docRef = db.collection('perfumes').doc(); // Auto-generate ID
             batch.set(docRef, perfumeData);
             successCount++;
         } else {
-             errors.push(`Row ${index + 2}: ${result.error.issues.map(i => i.message).join(', ')}`);
+             errors.push(`Row ${index + 2}: ${result.error.issues.map(i => `${i.path.join('.')} - ${i.message}`).join(', ')}`);
         }
     });
 
@@ -153,13 +174,18 @@ export async function addPerfumesBatch(data: any[]) {
     return { successCount, errors };
 }
 
-export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'>>) {
+export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id' | 'imageUrl'>>) {
   const validatedData = perfumeSchema.partial().parse(data);
   
+  const dataToSave: Partial<Perfume> = { ...validatedData };
+  if(validatedData.number) {
+    dataToSave.imageUrl = `https://picsum.photos/seed/perfume${validatedData.number}/400/600`
+  }
+
   try {
     const db = await getDb();
     const docRef = db.collection('perfumes').doc(id);
-    await docRef.update(validatedData);
+    await docRef.update(dataToSave);
     revalidatePath('/');
     revalidatePath('/dashboard');
     revalidatePath(`/perfume/${id}`);

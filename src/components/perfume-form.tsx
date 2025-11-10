@@ -36,7 +36,6 @@ const perfumeSchema = z.object({
   lokasi: z.string().min(2, 'Location/Occasion is required.'),
   jenisAroma: z.string().min(2, 'Scent type is required.'),
   kualitas: z.string().min(2, 'Quality is required.'),
-  imageUrl: z.string().url('Must be a valid URL.').optional().or(z.literal('')),
 });
 
 type PerfumeFormProps = {
@@ -55,7 +54,6 @@ export function PerfumeForm({ perfume }: PerfumeFormProps) {
     defaultValues: perfume ? {
       ...perfume,
       number: perfume.number || 0,
-      imageUrl: perfume.imageUrl || '',
     } : {
       number: 0,
       namaParfum: '',
@@ -68,7 +66,6 @@ export function PerfumeForm({ perfume }: PerfumeFormProps) {
       lokasi: '',
       jenisAroma: '',
       kualitas: '',
-      imageUrl: '',
     },
   });
 
@@ -196,14 +193,6 @@ export function PerfumeForm({ perfume }: PerfumeFormProps) {
                             </FormItem>
                         )} />
                     </div>
-                    <FormField control={form.control} name="imageUrl" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Image URL</FormLabel>
-                            <FormControl><Input placeholder="https://example.com/image.png" {...field} /></FormControl>
-                            <FormDescription>Provide a URL for the perfume image.</FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )} />
                     <div className="flex justify-end space-x-4">
                         <Button variant="outline" type="button" onClick={() => router.back()} disabled={isSubmitting}>
                             Cancel

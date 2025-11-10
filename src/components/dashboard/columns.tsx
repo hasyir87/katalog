@@ -83,8 +83,12 @@ const DeleteConfirmation = ({ perfumeId, onDeleted }: { perfumeId: string, onDel
 
 export const columns: ColumnDef<Perfume>[] = [
   {
-    accessorKey: 'number',
+    id: 'rowNumber',
     header: '#',
+    cell: ({ row }) => {
+      // row.index is the index on the current page, which is what we want.
+      return <span>{row.index + 1}</span>;
+    },
   },
   {
     accessorKey: 'namaParfum',
