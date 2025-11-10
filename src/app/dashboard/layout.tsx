@@ -34,6 +34,7 @@ export default function DashboardLayout({
     }
 
     // 3. If there is a user, verify their authorization against our rules.
+    // This should only run ONCE when the user object is first available.
     let isMounted = true;
     const verifyUser = async () => {
       try {
@@ -73,6 +74,7 @@ export default function DashboardLayout({
     };
     
     // Only run the verification if we are in the initial 'verifying' state with a user object.
+    // This condition is the key to preventing the infinite loop.
     if (authState === 'verifying') {
         verifyUser();
     }
@@ -81,8 +83,6 @@ export default function DashboardLayout({
       isMounted = false;
     };
     // This effect depends on the user object, its loading state, and its own authState.
-    // The key is that `verifyUser` is only called when authState is 'verifying',
-    // preventing a loop if signOut causes a re-render.
   }, [user, isUserLoading, auth, router, toast, authState]);
 
   // Render content based on the authorization state
