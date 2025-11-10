@@ -34,7 +34,7 @@ const perfumeSchema = z.object({
   sex: z.enum(['Male', 'Female', 'Unisex']),
   lokasi: z.string().min(2, 'Location/Occasion is required.'),
   jenisAroma: z.string().min(2, 'Scent type is required.'),
-  kualitas: z.string().min(2, 'Quality is required.'),
+  kualitas: z.enum(['Premium', 'Extrait']),
 });
 
 type PerfumeFormProps = {
@@ -62,7 +62,7 @@ export function PerfumeForm({ perfume }: PerfumeFormProps) {
       sex: 'Unisex',
       lokasi: '',
       jenisAroma: '',
-      kualitas: '',
+      kualitas: 'Premium',
     },
   });
 
@@ -160,7 +160,13 @@ export function PerfumeForm({ perfume }: PerfumeFormProps) {
                         <FormField control={form.control} name="kualitas" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Kualitas</FormLabel>
-                                <FormControl><Input placeholder="e.g., Eau de Parfum" {...field} /></FormControl>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Pilih kualitas" /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="Premium">Premium</SelectItem>
+                                        <SelectItem value="Extrait">Extrait</SelectItem>
+                                    </SelectContent>
+                                </Select>
                                 <FormMessage />
                             </FormItem>
                         )} />

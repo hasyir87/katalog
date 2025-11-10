@@ -49,7 +49,8 @@
         },
         "kualitas": {
           "type": "string",
-          "description": "The perceived quality or rating of the perfume."
+          "description": "The perceived quality or rating of the perfume.",
+          "enum": ["Premium", "Extrait"]
         },
         "imageUrl": {
             "type": "string",

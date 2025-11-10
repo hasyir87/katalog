@@ -18,7 +18,7 @@ const perfumeSchema = z.object({
   sex: z.enum(['Male', 'Female', 'Unisex']),
   lokasi: z.string().min(2, 'Location/Occasion is required.'),
   jenisAroma: z.string().min(2, 'Scent type is required.'),
-  kualitas: z.string().min(2, 'Quality is required.'),
+  kualitas: z.enum(['Premium', 'Extrait']),
 });
 
 const perfumeImportSchema = z.object({
@@ -32,7 +32,7 @@ const perfumeImportSchema = z.object({
   Sex: z.enum(['Pria', 'Wanita', 'Unisex']),
   Lokasi: z.string(),
   'Jenis Aroma': z.string(),
-  Kualitas: z.string(),
+  Kualitas: z.enum(['Premium', 'Extrait']),
   'Image URL': z.string().url().optional().or(z.literal('')),
 });
 
@@ -188,7 +188,7 @@ export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'
   const validatedData = perfumeSchema.partial().passthrough().parse(data);
   
   // We only want to save the validated fields from our schema, excluding any 'number' field that might be passed.
-  const { number, ...dataToSave } = validatedData;
+  const { number, ...dataToSave } = validatedData as any;
 
   try {
     const db = await getDb();
