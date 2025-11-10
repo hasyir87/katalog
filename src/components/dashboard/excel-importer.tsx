@@ -20,6 +20,7 @@ import { UploadCloud, Loader2, FileCheck2, AlertCircle } from 'lucide-react';
 import { addPerfumesBatch } from '@/lib/actions';
 import { ScrollArea } from '../ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { cn } from '@/lib/utils';
 
 export function ExcelImporter() {
   const [file, setFile] = useState<File | null>(null);
@@ -133,6 +134,8 @@ export function ExcelImporter() {
 
   const keys = parsedData.length > 0 ? Object.keys(parsedData[0]) : [];
 
+  const textWrapCols = ['Deskripsi Parfum', 'Top Notes', 'Middle Notes', 'Base Notes'];
+
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
         setOpen(isOpen)
@@ -171,13 +174,22 @@ export function ExcelImporter() {
                     <Table>
                         <TableHeader className="sticky top-0 bg-background">
                             <TableRow>
-                                {keys.map(key => <TableHead key={key}>{key}</TableHead>)}
+                                {keys.map(key => (
+                                    <TableHead key={key} className={cn(textWrapCols.includes(key) && "min-w-[150px]")}>{key}</TableHead>
+                                ))}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {parsedData.map((row, rowIndex) => (
                                 <TableRow key={rowIndex}>
-                                    {keys.map(key => <TableCell key={`${rowIndex}-${key}`} className="text-xs">{row[key]}</TableCell>)}
+                                    {keys.map(key => (
+                                        <TableCell 
+                                            key={`${rowIndex}-${key}`} 
+                                            className={cn("text-xs", textWrapCols.includes(key) && "whitespace-normal")}
+                                        >
+                                            {row[key]}
+                                        </TableCell>
+                                    ))}
                                 </TableRow>
                             ))}
                         </TableBody>
