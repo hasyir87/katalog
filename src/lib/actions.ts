@@ -27,31 +27,48 @@ const perfumeSchema = z.object({
 // --- User Actions ---
 
 export async function getOrCreateUser(user: User): Promise<boolean> {
-  // Explicitly check if the user's email is in the allowlist.
-  if (!user.email || !allowedUsers.includes(user.email)) {
-    console.log(`Authorization denied for email: ${user.email}`);
-    return false;
-  }
-  
-  // If they are in the allowlist, proceed to check Firestore.
-  const db = await getDb();
-  const userRef = db.collection('users').doc(user.uid);
-  const userDoc = await userRef.get();
+  try {
+    // Explicitly check if the user's email is in the allowlist.
+    if (!user.email || !allowedUsers.includes(user.email)) {
+      console.log(`Authorization denied for email: ${user.email}`);
+      return false;
+    }
+    
+    // If they are in the allowlist, proceed to check Firestore.
+    const db = await getDb();
+    const userRef = db.collection('users').doc(user.uid);
+    const userDoc = await userRef.get();
 
-  if (userDoc.exists) {
-    console.log(`Authorization successful for existing user: ${user.email}`);
-    return true;
-  } else {
-    // If user is in the allowlist but has no doc, it means registration didn't complete.
-    // The login flow should not create a user, only the registration flow.
-    // So if the doc doesn't exist at login, they are not fully authorized.
-    console.warn(`User document not found for allowed user: ${user.email}. Access denied.`);
+    if (userDoc.exists) {
+      console.log(`Authorization successful for existing user: ${user.email}`);
+      return true;
+    } else {
+      console.warn(`User document not found for allowed user: ${user.email}. Access will be denied until profile is created.`);
+      return false;
+    }
+  } catch (error: any) {
+    console.error("Error in getOrCreateUser:", error.message);
     return false;
   }
 }
 
 
 // --- Perfume Actions ---
+
+export async function getPerfumes(): Promise<Perfume[]> {
+    try {
+        const db = await getDb();
+        const perfumesCollection = db.collection('perfumes');
+        const snapshot = await perfumesCollection.get();
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
+    } catch (error: any) {
+        console.error("Error fetching perfumes: ", error.message);
+        // Return an empty array on error to prevent the app from crashing.
+        // The console error will indicate the underlying problem.
+        return [];
+    }
+}
+
 
 export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
   try {
