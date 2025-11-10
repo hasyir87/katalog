@@ -22,7 +22,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import type { Perfume } from '@/lib/types';
 import { addPerfume, updatePerfume } from '@/lib/actions';
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Wand2 } from 'lucide-react';
+import { generatePerfumeDescription } from '@/ai/flows/perfume-description-generator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const perfumeSchema = z.object({
   namaParfum: z.string().min(2, 'Name must be at least 2 characters long.'),
@@ -45,6 +47,7 @@ export function PerfumeForm({ perfume }: PerfumeFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   
   const isEditMode = !!perfume;
 
@@ -89,6 +92,40 @@ export function PerfumeForm({ perfume }: PerfumeFormProps) {
     }
   }
 
+  const handleGenerateDescription = async () => {
+    setIsGenerating(true);
+    try {
+      const values = form.getValues();
+      const result = await generatePerfumeDescription({
+        namaParfum: values.namaParfum,
+        topNotes: values.topNotes,
+        middleNotes: values.middleNotes,
+        baseNotes: values.baseNotes,
+        penggunaan: values.penggunaan,
+        sex: values.sex,
+        jenisAroma: values.jenisAroma,
+        kualitas: values.kualitas,
+      });
+      if (result.deskripsiParfum) {
+        form.setValue('deskripsiParfum', result.deskripsiParfum);
+        toast({
+          title: 'Deskripsi Dibuat!',
+          description: 'Deskripsi parfum telah dibuat oleh AI.',
+        });
+      } else {
+        throw new Error('AI did not return a description.');
+      }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Gagal membuat deskripsi dengan AI.',
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <Card className="max-w-4xl mx-auto">
         <CardHeader>
@@ -107,7 +144,33 @@ export function PerfumeForm({ perfume }: PerfumeFormProps) {
                     )} />
                     <FormField control={form.control} name="deskripsiParfum" render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Deskripsi Parfum</FormLabel>
+                            <div className="flex items-center justify-between">
+                                <FormLabel>Deskripsi Parfum</FormLabel>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={handleGenerateDescription}
+                                                disabled={isGenerating}
+                                                className="gap-2"
+                                            >
+                                                {isGenerating ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <Wand2 className="h-4 w-4" />
+                                                )}
+                                                Generate with AI
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Buat deskripsi secara otomatis berdasarkan atribut lainnya.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
                             <FormControl><Textarea placeholder="Describe the essence of the perfume..." {...field} /></FormControl>
                             <FormMessage />
                         </FormItem>
@@ -191,8 +254,8 @@ export function PerfumeForm({ perfume }: PerfumeFormProps) {
                         <Button variant="outline" type="button" onClick={() => router.back()} disabled={isSubmitting}>
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        <Button type="submit" disabled={isSubmitting || isGenerating}>
+                            {(isSubmitting || isGenerating) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {isSubmitting ? 'Saving...' : (isEditMode ? 'Update Perfume' : 'Add Perfume')}
                         </Button>
                     </div>

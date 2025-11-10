@@ -131,7 +131,9 @@ export async function addPerfumesBatch(data: any[]) {
     let successCount = 0;
     const errors: string[] = [];
 
-    data.forEach((item, index) => {
+    const plainData = JSON.parse(JSON.stringify(data));
+
+    plainData.forEach((item: any, index: number) => {
         // We manually map to handle potential missing optional fields from Excel
         const mappedItem = {
             'No': item.No,
