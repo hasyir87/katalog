@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -21,20 +22,20 @@ export default function DashboardLayout({
   const [authState, setAuthState] = useState<'verifying' | 'authorized' | 'unauthorized'>('verifying');
 
   useEffect(() => {
-    // Don't do anything until Firebase has determined the user's auth state
+    // If Firebase is still figuring out the user, do nothing yet.
     if (isUserLoading) {
       setAuthState('verifying');
       return;
     }
 
-    // If there's no user, they need to log in.
+    // If there is no user, they are unauthorized.
     if (!user) {
       setAuthState('unauthorized');
       router.replace('/login');
       return;
     }
 
-    // If there is a user, check if they are authorized.
+    // If there is a user, verify their authorization.
     let isMounted = true;
 
     const verifyUser = async () => {
@@ -44,7 +45,7 @@ export default function DashboardLayout({
           if (isAuthorized) {
             setAuthState('authorized');
           } else {
-             // User is not in the allowlist
+            // User is not in the allowlist.
             toast({
               variant: "destructive",
               title: "Akses Ditolak",
@@ -54,24 +55,21 @@ export default function DashboardLayout({
               await signOut(auth);
             }
             setAuthState('unauthorized');
-            router.replace('/login');
+            // No need to router.replace here, the change in user state will trigger it.
           }
         }
       } catch (error: any) {
         if (isMounted) {
-          // This might happen for network errors or other unexpected issues
           console.error("Authorization check failed unexpectedly:", error.message);
           toast({
             variant: "destructive",
             title: "Error Verifikasi",
             description: "Gagal memverifikasi otorisasi Anda. Silakan coba lagi.",
           });
-          
           if (auth) {
             await signOut(auth);
           }
           setAuthState('unauthorized');
-          router.replace('/login');
         }
       }
     };
@@ -84,7 +82,6 @@ export default function DashboardLayout({
 
   }, [user, isUserLoading, auth, router, toast]);
 
-  // Render content based on the authorization state
   if (authState === 'verifying') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
@@ -98,12 +95,11 @@ export default function DashboardLayout({
     return <>{children}</>;
   }
 
-  // For 'unauthorized' state, show a redirection message.
-  // The useEffect will handle the actual redirection.
+  // For 'unauthorized' state. The effect already handles redirection.
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-4">
       <Loader2 className="h-8 w-8 animate-spin text-destructive" />
-      <p className="text-muted-foreground">Akses ditolak. Mengalihkan...</p>
+      <p className="text-muted-foreground">Akses ditolak. Mengalihkan ke halaman login...</p>
     </div>
   );
 }

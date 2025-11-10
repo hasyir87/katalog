@@ -1,3 +1,4 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -38,13 +39,12 @@ export async function getOrCreateUser(user: User): Promise<boolean> {
   const userDoc = await userRef.get();
 
   if (userDoc.exists) {
-    // User exists and is in the allowlist.
     console.log(`Authorization successful for existing user: ${user.email}`);
     return true;
   } else {
-    // This case can happen if a user is in the allowlist but hasn't registered yet.
-    // The registration flow should handle creation. For dashboard access,
-    // we strictly require the document to exist.
+    // If user is in the allowlist but has no doc, maybe registration failed.
+    // The login flow should not create a user, only the registration flow.
+    // So if the doc doesn't exist at login, they are not fully authorized.
     console.error(`User document not found for allowed user: ${user.email}. Access denied.`);
     return false;
   }
