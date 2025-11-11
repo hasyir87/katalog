@@ -94,14 +94,26 @@ export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
 }
 
 export async function addPerfume(data: Omit<Perfume, 'id'>) {
-    // This ensures we only validate and use the fields defined in the schema.
-    const validatedData = perfumeSchema.parse(data);
     const db = await getDb();
 
     try {
+        // Explicitly create an object with only the fields defined in the schema
+        const dataToValidate = {
+            namaParfum: data.namaParfum,
+            deskripsiParfum: data.deskripsiParfum,
+            topNotes: data.topNotes,
+            middleNotes: data.middleNotes,
+            baseNotes: data.baseNotes,
+            penggunaan: data.penggunaan,
+            sex: data.sex,
+            lokasi: data.lokasi,
+            jenisAroma: data.jenisAroma,
+            kualitas: data.kualitas,
+        };
+
+        const validatedData = perfumeSchema.parse(dataToValidate);
         const perfumesCollection = db.collection('perfumes');
         
-        // Add the validated data.
         const docRef = await perfumesCollection.add(validatedData);
         
         revalidatePath('/');
@@ -171,7 +183,7 @@ export async function addPerfumesBatch(data: any[]) {
 }
 
 export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'>>) {
-  const validatedData = perfumeSchema.passthrough().parse(data);
+  const validatedData = perfumeSchema.partial().parse(data);
 
   try {
     const db = await getDb();
