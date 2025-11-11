@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { LogOut, LayoutDashboard, User as UserIcon } from 'lucide-react';
+import { LogOut, LayoutDashboard, User as UserIcon, Wand2 } from 'lucide-react';
 import { useUser, useAuth as useFirebaseAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -46,6 +46,13 @@ export function Header() {
             className="text-foreground/60 transition-colors hover:text-foreground/80"
           >
             AI Recommender
+          </Link>
+           <Link
+            href="/chat"
+            className="text-foreground/60 transition-colors hover:text-foreground/80 flex items-center gap-1"
+          >
+            <Wand2 className="h-4 w-4" />
+            AI Chat
           </Link>
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
