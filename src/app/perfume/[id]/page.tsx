@@ -17,7 +17,7 @@ export default async function PerfumeDetailPage({ params }: { params: { id: stri
     { icon: Droplets, label: "Top Notes", value: perfume.topNotes },
     { icon: Flower, label: "Middle Notes", value: perfume.middleNotes },
     { icon: Milestone, label: "Base Notes", value: perfume.baseNotes },
-    { icon: User, label: "Sex", value: perfume.sex },
+    { icon: User, label: "Sex", value: perfume.sex === 'Male' ? 'Pria' : perfume.sex === 'Female' ? 'Wanita' : 'Unisex' },
     { icon: Clock, label: "Penggunaan", value: perfume.penggunaan },
     { icon: Building, label: "Lokasi", value: perfume.lokasi },
     { icon: Sparkle, label: "Kualitas", value: perfume.kualitas },

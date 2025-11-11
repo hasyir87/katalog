@@ -9,6 +9,8 @@ interface PerfumeCardProps {
 }
 
 export function PerfumeCard({ perfume }: PerfumeCardProps) {
+  const formattedSex = perfume.sex === 'Male' ? 'Pria' : perfume.sex === 'Female' ? 'Wanita' : 'Unisex';
+  
   return (
     <Link href={`/perfume/${perfume.id}`} className="group">
       <Card className="h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-card">
@@ -24,7 +26,7 @@ export function PerfumeCard({ perfume }: PerfumeCardProps) {
                   <span>{perfume.kualitas}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span>{perfume.sex}</span>
+                  <span>{formattedSex}</span>
                 </div>
               </div>
               <p className="text-muted-foreground text-sm line-clamp-3">{perfume.deskripsiParfum}</p>
