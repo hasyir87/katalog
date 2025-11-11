@@ -75,7 +75,7 @@ export function DataTable<TData extends Perfume, TValue>({
             className="max-w-sm"
             />
         </div>
-      <div className="rounded-md border flex-grow overflow-y-auto">
+      <div className="rounded-md border flex-grow overflow-y-auto relative">
         <Table>
           <TableHeader className="sticky top-0 bg-background z-10">
             {table.getHeaderGroups().map(headerGroup => (

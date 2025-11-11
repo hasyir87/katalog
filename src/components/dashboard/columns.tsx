@@ -9,14 +9,12 @@ import { Button } from '@/components/ui/button';
 export const columns: ColumnDef<Perfume>[] = [
   {
     id: 'number',
-    header: ({ table }) => (
-      <div className="w-[30px] text-center">No.</div>
+    header: () => (
+      <div className="px-3 text-center w-[50px]">No.</div>
     ),
     cell: ({ row, table }) => (
-      <div className="w-[30px] text-center">
-        {table
-          .getSortedRowModel()
-          .rows.findIndex(sortedRow => sortedRow.id === row.id) + 1}
+       <div className="text-center">
+        {table.getSortedRowModel().rows.findIndex(sortedRow => sortedRow.id === row.id) + 1}
       </div>
     ),
     enableSorting: false,
