@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -8,9 +9,12 @@ import Link from 'next/link';
 import { collection } from 'firebase/firestore';
 import type { Perfume } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useMemo } from 'react';
+import { Input } from '@/components/ui/input';
 
 export default function Home() {
   const firestore = useFirestore();
+  const [searchQuery, setSearchQuery] = useState('');
   
   const perfumesCollection = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -18,6 +22,17 @@ export default function Home() {
   }, [firestore]);
 
   const { data: perfumes, isLoading } = useCollection<Perfume>(perfumesCollection);
+
+  const filteredPerfumes = useMemo(() => {
+    if (!perfumes) return [];
+    if (!searchQuery) return perfumes;
+
+    return perfumes.filter(perfume => 
+      perfume.namaParfum.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      perfume.jenisAroma.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      perfume.deskripsiParfum.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [perfumes, searchQuery]);
 
   return (
     <div className="flex flex-col min-h-[100dvh]">
@@ -63,22 +78,35 @@ export default function Home() {
                 </p>
               </div>
             </div>
+            <div className="max-w-xl mx-auto my-8">
+              <Input 
+                type="text"
+                placeholder="Cari berdasarkan nama, aroma, atau deskripsi..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full text-base"
+              />
+            </div>
             {isLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8 pt-12">
                 {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-96 rounded-lg" />)}
               </div>
-            ) : perfumes && perfumes.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8 pt-12 animate-in fade-in-0 duration-500">
-                {perfumes.map((perfume) => (
+            ) : filteredPerfumes && filteredPerfumes.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8 pt-6 animate-in fade-in-0 duration-500">
+                {filteredPerfumes.map((perfume) => (
                   <PerfumeCard key={perfume.id} perfume={perfume} />
                 ))}
               </div>
             ) : (
               <div className="text-center py-12">
-                <p className="text-lg text-muted-foreground">Belum ada parfum di dalam koleksi.</p>
-                <Button asChild variant="link" className="mt-2">
-                  <Link href="/dashboard">Tambahkan yang pertama!</Link>
-                </Button>
+                <p className="text-lg text-muted-foreground">
+                  {searchQuery ? `Tidak ada parfum yang cocok dengan "${searchQuery}".` : 'Belum ada parfum di dalam koleksi.'}
+                </p>
+                {!searchQuery && (
+                  <Button asChild variant="link" className="mt-2">
+                    <Link href="/dashboard">Tambahkan yang pertama!</Link>
+                  </Button>
+                )}
               </div>
             )}
           </div>
