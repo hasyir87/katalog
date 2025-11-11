@@ -10,6 +10,5 @@ export type Perfume = {
   lokasi: string;
   jenisAroma: string;
   kualitas: 'Premium' | 'Extrait';
-  imageUrl?: string;
   number?: number;
 };

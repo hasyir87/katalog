@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
 import { getPerfumeById, getPerfumes } from '@/lib/actions';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,29 +24,8 @@ export default async function PerfumeDetailPage({ params }: { params: { id: stri
   ];
 
   return (
-    <div className="container mx-auto max-w-6xl py-12 md:py-16">
-      <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-start">
-        <div className="flex flex-col items-center gap-6">
-          <div className="w-full aspect-[2/3] max-w-sm rounded-lg overflow-hidden shadow-2xl">
-            <Image
-              src={perfume.imageUrl ?? 'https://picsum.photos/seed/placeholder/400/600'}
-              alt={perfume.namaParfum}
-              width={400}
-              height={600}
-              className="object-cover w-full h-full"
-              data-ai-hint="perfume product"
-            />
-          </div>
-          <Card className="w-full max-w-sm">
-             <CardHeader>
-                <CardTitle className="text-lg font-headline">Scent QR Code</CardTitle>
-             </CardHeader>
-             <CardContent className="flex flex-col items-center gap-4">
-                <p className="text-sm text-center text-muted-foreground">Scan to discover more perfumes with the <span className="font-bold text-foreground">{perfume.jenisAroma}</span> scent profile.</p>
-                <QrCodeDisplay scentType={perfume.jenisAroma} />
-             </CardContent>
-          </Card>
-        </div>
+    <div className="container mx-auto max-w-4xl py-12 md:py-16">
+      <div className="grid md:grid-cols-[1fr_250px] gap-8 lg:gap-12 items-start">
         <div className="space-y-6">
           <Badge variant="secondary">{perfume.jenisAroma}</Badge>
           <h1 className="text-4xl lg:text-5xl font-bold font-headline tracking-tight text-primary">
@@ -71,6 +49,17 @@ export default async function PerfumeDetailPage({ params }: { params: { id: stri
                 ))}
             </ul>
           </div>
+        </div>
+         <div className="flex flex-col items-center gap-6 sticky top-24">
+          <Card className="w-full max-w-sm">
+             <CardHeader>
+                <CardTitle className="text-lg font-headline">Scent QR Code</CardTitle>
+             </CardHeader>
+             <CardContent className="flex flex-col items-center gap-4">
+                <p className="text-sm text-center text-muted-foreground">Scan to discover more perfumes with the <span className="font-bold text-foreground">{perfume.jenisAroma}</span> scent profile.</p>
+                <QrCodeDisplay scentType={perfume.jenisAroma} />
+             </CardContent>
+          </Card>
         </div>
       </div>
     </div>

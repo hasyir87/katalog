@@ -51,11 +51,6 @@
           "type": "string",
           "description": "The perceived quality or rating of the perfume.",
           "enum": ["Premium", "Extrait"]
-        },
-        "imageUrl": {
-            "type": "string",
-            "format": "uri",
-            "description": "URL of the perfume image."
         }
       },
       "required": [

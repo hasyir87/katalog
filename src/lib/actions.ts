@@ -94,15 +94,15 @@ export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
   }
 }
 
-export async function addPerfume(data: Omit<Perfume, 'id' | 'imageUrl' | 'number'>) {
+export async function addPerfume(data: Omit<Perfume, 'id' | 'number'>) {
   const validatedData = perfumeSchema.parse(data);
   const db = await getDb();
-  
+
   try {
-    const docRef = await db.collection('perfumes').add({
-      ...validatedData,
-      imageUrl: `https://picsum.photos/seed/${Math.random()}/400/600`, // Use random seed for image
-    });
+    const perfumesCollection = db.collection('perfumes');
+    
+    // Simplified logic: just add the validated data
+    const docRef = await perfumesCollection.add(validatedData);
     
     revalidatePath('/');
     revalidatePath('/dashboard');
@@ -153,7 +153,6 @@ export async function addPerfumesBatch(data: any[]) {
                 lokasi: result.data.Lokasi,
                 jenisAroma: result.data['Jenis Aroma'],
                 kualitas: result.data.Kualitas,
-                imageUrl: `https://picsum.photos/seed/perfume${result.data.No}/400/600`,
             };
             const docRef = db.collection('perfumes').doc(); // Auto-generate ID
             batch.set(docRef, perfumeData);
@@ -173,10 +172,10 @@ export async function addPerfumesBatch(data: any[]) {
     return { successCount, errors };
 }
 
-export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id' | 'imageUrl' | 'number'>>) {
+export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id' | 'number'>>) {
   const validatedData = perfumeSchema.passthrough().parse(data);
   
-  const { number, imageUrl, ...dataToSave } = validatedData as any;
+  const { number, ...dataToSave } = validatedData as any;
 
   try {
     const db = await getDb();
