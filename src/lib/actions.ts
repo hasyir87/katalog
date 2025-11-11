@@ -5,8 +5,6 @@ import { revalidatePath } from 'next/cache';
 import { getDb } from '@/firebase/server-init';
 import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
-import type { User as FirebaseAuthUser } from 'firebase/auth'; // Renamed to avoid conflict
-import { allowedUsers } from './auth-allowlist';
 
 const perfumeSchema = z.object({
   namaParfum: z.string().min(2, 'Name must be at least 2 characters long.'),
@@ -33,35 +31,6 @@ const perfumeImportSchema = z.object({
   'Jenis Aroma': z.string(),
   Kualitas: z.enum(['Premium', 'Extrait']),
 });
-
-
-// --- User Actions ---
-
-export async function getOrCreateUser(user: FirebaseAuthUser): Promise<boolean> {
-  try {
-    if (!user.email || !allowedUsers.includes(user.email)) {
-      console.log(`Authorization denied for email not in allowlist: ${user.email}`);
-      return false;
-    }
-    
-    const db = await getDb();
-    const userRef = db.collection('users').doc(user.uid);
-    const userDoc = await userRef.get();
-
-    if (userDoc.exists) {
-      return true;
-    } else {
-      await userRef.set({
-        displayName: user.displayName,
-        email: user.email,
-      });
-      return true;
-    }
-  } catch (error: any) {
-    console.error("Error in getOrCreateUser:", error.message);
-    return false;
-  }
-}
 
 
 // --- Perfume Actions ---
@@ -94,9 +63,9 @@ export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
 }
 
 export async function addPerfume(data: Omit<Perfume, 'id'>) {
-    const db = await getDb();
-
     try {
+        const db = await getDb();
+
         // Explicitly create an object with only the fields defined in the schema
         const dataToValidate = {
             namaParfum: data.namaParfum,
@@ -112,9 +81,8 @@ export async function addPerfume(data: Omit<Perfume, 'id'>) {
         };
 
         const validatedData = perfumeSchema.parse(dataToValidate);
-        const perfumesCollection = db.collection('perfumes');
         
-        const docRef = await perfumesCollection.add(validatedData);
+        const docRef = await db.collection('perfumes').add(validatedData);
         
         revalidatePath('/');
         revalidatePath('/dashboard');
@@ -122,7 +90,11 @@ export async function addPerfume(data: Omit<Perfume, 'id'>) {
         return { id: docRef.id, ...validatedData };
     } catch (error: any) {
         console.error("Error adding perfume: ", error);
-        throw new Error('Failed to add perfume.');
+        // Ensure a meaningful error is thrown to the client.
+        if (error instanceof z.ZodError) {
+            throw new Error(`Validation failed: ${error.errors.map(e => e.message).join(', ')}`);
+        }
+        throw new Error(error.message || 'Failed to add perfume.');
     }
 }
 
