@@ -1,6 +1,7 @@
+
 'use server';
 
-import { initializeApp, getApps, getApp, ServiceAccount, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp, ServiceAccount, cert, App } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 
 // This function is carefully designed to work in both local and deployed environments.
@@ -31,44 +32,37 @@ function getServiceAccount(): ServiceAccount | undefined {
     }
 }
 
-let db: Firestore;
-let dbInitializationError: Error | null = null;
-
-function initializeDb() {
-    // Prevent re-initialization if already done or if it failed previously.
-    if (db || dbInitializationError) {
-        return;
+function initializeAdminApp(): App {
+    // If an app is already initialized, return it to prevent re-initialization.
+    if (getApps().length > 0) {
+        return getApp();
     }
 
-    try {
-        if (getApps().length === 0) {
-            const serviceAccount = getServiceAccount();
-            const options = serviceAccount 
-                ? { credential: cert(serviceAccount) } 
-                : {}; // For deployed environments, the SDK will auto-discover credentials.
-            
-            // If running locally without a service account, this will throw an error.
-            const adminApp = initializeApp(options);
-            db = getFirestore(adminApp);
-        } else {
-            db = getFirestore(getApp());
-        }
-    } catch (error: any) {
-        console.error("CRITICAL: Failed to initialize Firebase Admin SDK.", error.message);
-        dbInitializationError = error;
-    }
+    const serviceAccount = getServiceAccount();
+    const options = serviceAccount 
+        ? { credential: cert(serviceAccount) } 
+        : {}; // For deployed environments, the SDK will auto-discover credentials.
+    
+    // If running locally without a service account, this will throw an error.
+    return initializeApp(options);
 }
 
-// Initialize the database connection when the module is first loaded.
-initializeDb();
+
+let db: Firestore;
 
 // Export a function that returns the initialized database instance.
+// This new pattern ensures initialization happens reliably.
 export async function getDb(): Promise<Firestore> {
-    if (dbInitializationError) {
-        throw new Error(`Firebase Admin SDK is not initialized. Reason: ${dbInitializationError.message}`);
-    }
     if (!db) {
-         throw new Error("Firebase Admin SDK could not be initialized. The 'db' instance is not available. This might happen if running locally without credentials.");
+        try {
+            const adminApp = initializeAdminApp();
+            db = getFirestore(adminApp);
+        } catch (error: any) {
+            console.error("CRITICAL: Failed to initialize Firebase Admin SDK.", error.message);
+            // This throw will be caught by the server action and result in a 500 error,
+            // but with a clear server-side log of what went wrong.
+            throw new Error(`Firebase Admin SDK is not initialized. Reason: ${error.message}`);
+        }
     }
     return db;
 }
