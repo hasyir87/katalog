@@ -36,7 +36,7 @@ export const columns: ColumnDef<Perfume>[] = [
   {
     accessorKey: 'deskripsiParfum',
     header: 'Deskripsi',
-    cell: ({ row }) => <div className="line-clamp-2 max-w-xs">{row.original.deskripsiParfum}</div>
+    cell: ({ row }) => <div className="line-clamp-1 max-w-xs">{row.original.deskripsiParfum}</div>
   },
   {
     accessorKey: 'lokasi',

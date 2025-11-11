@@ -108,7 +108,7 @@ export function DataTable<TData extends Perfume, TValue>({
                   )}
                 >
                   {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id} className="h-10 py-2 px-3">
+                    <TableCell key={cell.id} className="py-2 px-3">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
