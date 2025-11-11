@@ -48,8 +48,8 @@ const getRelevantPerfumes = ai.defineTool({
         p.sex,
         p.kualitas,
       ].join(' ').toLowerCase();
-       // Check if all keywords are present in the combined text
-      return keywords.every(keyword => combinedText.includes(keyword));
+       // Check if at least one keyword is present in the combined text
+      return keywords.some(keyword => combinedText.includes(keyword));
     });
 
     // Map to the AI schema, ensuring all fields are strings or numbers as defined.
@@ -101,6 +101,13 @@ const recommendPerfumeFlow = ai.defineFlow(
   },
   async input => {
     const { output } = await prompt(input);
-    return output!;
+    
+    if (!output || !output.recommendations) {
+        return { recommendations: [] };
+    }
+
+    // Ensure the output matches the expected structure.
+    const validRecommendations = output.recommendations.filter(p => p.Nama_Parfum);
+    return { recommendations: validRecommendations };
   }
 );

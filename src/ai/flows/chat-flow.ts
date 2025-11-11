@@ -48,8 +48,8 @@ const queryDatabase = ai.defineTool({
         p.sex,
         p.kualitas,
       ].join(' ').toLowerCase();
-      // Check if all keywords are present in the combined text
-      return keywords.every(keyword => combinedText.includes(keyword));
+      // Check if at least one keyword is present in the combined text
+      return keywords.some(keyword => combinedText.includes(keyword));
     });
 
     // Map to the AI schema, ensuring all fields are correctly typed and named.
