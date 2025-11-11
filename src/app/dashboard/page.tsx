@@ -98,8 +98,8 @@ export default function DashboardPage() {
                                         AI Chat
                                     </Button>
                                 </SheetTrigger>
-                                <SheetContent className="w-full max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl p-0" side="right">
-                                   <SheetHeader className="p-6 border-b">
+                                <SheetContent className="w-full max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl p-0 flex flex-col" side="right">
+                                   <SheetHeader className="p-6 border-b flex-shrink-0">
                                        <SheetTitle className="flex items-center gap-2 font-headline">
                                            <Wand2 className="h-6 w-6 text-primary" />
                                            AI Assistant
@@ -108,7 +108,7 @@ export default function DashboardPage() {
                                             Chat with the AI to query the perfume database or analyze files.
                                        </SheetDescription>
                                    </SheetHeader>
-                                   <div className="h-full py-6">
+                                   <div className="flex-grow overflow-y-auto">
                                      <AIChat />
                                    </div>
                                 </SheetContent>
@@ -134,8 +134,8 @@ export default function DashboardPage() {
                                  </SheetTrigger>
                                  <SheetContent side="right" className="w-full sm:max-w-md p-0">
                                      <SheetHeader className="p-6 pb-0">
-                                         <SheetTitle>{selectedPerfume.namaParfum}</SheetTitle>
-                                         <SheetDescription>{selectedPerfume.jenisAroma}</SheetDescription>
+                                        <SheetTitle>{selectedPerfume.namaParfum}</SheetTitle>
+                                        <SheetDescription>{selectedPerfume.jenisAroma}</SheetDescription>
                                      </SheetHeader>
                                      {detailView}
                                  </SheetContent>
