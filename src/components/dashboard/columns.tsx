@@ -2,18 +2,54 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import type { Perfume } from '@/lib/types';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, ArrowUpDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 export const columns: ColumnDef<Perfume>[] = [
   {
+    id: 'number',
+    header: ({ table }) => (
+      <div className="w-[30px] text-center">No.</div>
+    ),
+    cell: ({ row, table }) => (
+      <div className="w-[30px] text-center">
+        {table
+          .getSortedRowModel()
+          .rows.findIndex(sortedRow => sortedRow.id === row.id) + 1}
+      </div>
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
     accessorKey: 'kualitas',
-    header: 'Kualitas',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Kualitas
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
     cell: ({ row }) => <div className="capitalize line-clamp-1 max-w-[100px]">{row.getValue('kualitas')}</div>
   },
   {
     accessorKey: 'sex',
-    header: 'Sex',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Sex
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
     cell: ({ row }) => {
         const sex = row.getValue('sex');
         const formattedSex = sex === 'Male' ? 'Pria' : sex === 'Female' ? 'Wanita' : 'Unisex';
@@ -22,7 +58,17 @@ export const columns: ColumnDef<Perfume>[] = [
   },
   {
     accessorKey: 'namaParfum',
-    header: 'Nama Parfum',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Nama Parfum
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
     cell: ({ row }) => <div className="line-clamp-1 font-medium max-w-[200px]">{row.getValue('namaParfum')}</div>,
   },
   {
