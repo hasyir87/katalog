@@ -22,7 +22,6 @@ const perfumeSchema = z.object({
 });
 
 const perfumeImportSchema = z.object({
-  No: z.coerce.number().int().positive(),
   'Nama Parfum': z.string().min(2),
   'Deskripsi Parfum': z.string().min(10),
   'Top Notes': z.string(),
@@ -94,24 +93,25 @@ export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
   }
 }
 
-export async function addPerfume(data: Omit<Perfume, 'id' | 'number'>) {
-  const validatedData = perfumeSchema.parse(data);
-  const db = await getDb();
+export async function addPerfume(data: Omit<Perfume, 'id'>) {
+    // This ensures we only validate and use the fields defined in the schema.
+    const validatedData = perfumeSchema.parse(data);
+    const db = await getDb();
 
-  try {
-    const perfumesCollection = db.collection('perfumes');
-    
-    // Simplified logic: just add the validated data
-    const docRef = await perfumesCollection.add(validatedData);
-    
-    revalidatePath('/');
-    revalidatePath('/dashboard');
-    
-    return { id: docRef.id, ...validatedData };
-  } catch (error: any) {
-     console.error("Error adding perfume: ", error);
-     throw new Error('Failed to add perfume.');
-  }
+    try {
+        const perfumesCollection = db.collection('perfumes');
+        
+        // Add the validated data.
+        const docRef = await perfumesCollection.add(validatedData);
+        
+        revalidatePath('/');
+        revalidatePath('/dashboard');
+        
+        return { id: docRef.id, ...validatedData };
+    } catch (error: any) {
+        console.error("Error adding perfume: ", error);
+        throw new Error('Failed to add perfume.');
+    }
 }
 
 export async function addPerfumesBatch(data: any[]) {
@@ -125,7 +125,6 @@ export async function addPerfumesBatch(data: any[]) {
 
     plainData.forEach((item: any, index: number) => {
         const mappedItem = {
-            'No': item.No,
             'Nama Parfum': item['Nama Parfum'],
             'Deskripsi Parfum': item['Deskripsi Parfum'],
             'Top Notes': item['Top Notes'],
@@ -142,7 +141,6 @@ export async function addPerfumesBatch(data: any[]) {
 
         if (result.success) {
             const perfumeData = {
-                number: result.data.No,
                 namaParfum: result.data['Nama Parfum'],
                 deskripsiParfum: result.data['Deskripsi Parfum'],
                 topNotes: result.data['Top Notes'],
@@ -172,15 +170,13 @@ export async function addPerfumesBatch(data: any[]) {
     return { successCount, errors };
 }
 
-export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id' | 'number'>>) {
+export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'>>) {
   const validatedData = perfumeSchema.passthrough().parse(data);
-  
-  const { number, ...dataToSave } = validatedData as any;
 
   try {
     const db = await getDb();
     const docRef = db.collection('perfumes').doc(id);
-    await docRef.update(dataToSave);
+    await docRef.update(validatedData);
     revalidatePath('/');
     revalidatePath('/dashboard');
     revalidatePath(`/perfume/${id}`);
