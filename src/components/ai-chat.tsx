@@ -120,14 +120,7 @@ export function AIChat() {
   }
 
   return (
-    <Card className="h-full flex flex-col shadow-none border-none rounded-none">
-      <CardHeader className="border-b">
-        <CardTitle className="flex items-center gap-2 font-headline">
-          <Wand2 className="h-6 w-6 text-primary" />
-          AI Assistant
-        </CardTitle>
-        <CardDescription>Chat with the AI to query the perfume database or analyze files.</CardDescription>
-      </CardHeader>
+    <Card className="h-full flex flex-col shadow-none border-none rounded-none bg-transparent">
       <CardContent className="p-0 flex-1 flex flex-col">
         <ScrollArea className="flex-1 p-6" ref={scrollAreaRef}>
           <div className="space-y-6">

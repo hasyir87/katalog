@@ -17,6 +17,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -98,6 +99,15 @@ export default function DashboardPage() {
                                     </Button>
                                 </SheetTrigger>
                                 <SheetContent className="w-full max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl p-0" side="right">
+                                   <SheetHeader className="p-6 border-b">
+                                       <SheetTitle className="flex items-center gap-2 font-headline">
+                                           <Wand2 className="h-6 w-6 text-primary" />
+                                           AI Assistant
+                                       </SheetTitle>
+                                       <SheetDescription>
+                                            Chat with the AI to query the perfume database or analyze files.
+                                       </SheetDescription>
+                                   </SheetHeader>
                                    <div className="h-full py-6">
                                      <AIChat />
                                    </div>
@@ -123,6 +133,10 @@ export default function DashboardPage() {
                                      <div style={{display: "none"}} />
                                  </SheetTrigger>
                                  <SheetContent side="right" className="w-full sm:max-w-md p-0">
+                                     <SheetHeader className="p-6 pb-0">
+                                         <SheetTitle>{selectedPerfume.namaParfum}</SheetTitle>
+                                         <SheetDescription>{selectedPerfume.jenisAroma}</SheetDescription>
+                                     </SheetHeader>
                                      {detailView}
                                  </SheetContent>
                             </Sheet>

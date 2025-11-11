@@ -59,7 +59,7 @@ export function PerfumeDetailView({ perfume, onClose }: PerfumeDetailViewProps) 
     ];
 
     return (
-        <Card className="h-full flex flex-col">
+        <Card className="h-full flex flex-col border-0 shadow-none rounded-none">
             <CardHeader className="flex flex-row items-start justify-between">
                 <div>
                     <Badge variant="secondary" className="mb-2">{perfume.jenisAroma}</Badge>
