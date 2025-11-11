@@ -226,7 +226,7 @@ The user has also uploaded a file. Here is its content:
     }
     
     // If it wasn't a mixer request, just return the AI's response.
-    const finalResponse = await llmResponse.output();
+    const finalResponse = llmResponse.output;
     if (!finalResponse) {
       return { response: "Maaf, saya tidak dapat memproses permintaan itu. Silakan coba lagi." };
     }

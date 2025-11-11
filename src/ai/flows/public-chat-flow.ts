@@ -115,7 +115,7 @@ User's message: {{{query}}}
     const llmResponse = await mainPrompt(input);
     
     // Just return the AI's response.
-    const finalResponse = await llmResponse.output();
+    const finalResponse = llmResponse.output;
     if (!finalResponse) {
       return { response: "Maaf, saya tidak dapat memproses permintaan itu. Silakan coba lagi." };
     }
