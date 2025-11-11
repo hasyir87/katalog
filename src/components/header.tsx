@@ -41,18 +41,6 @@ export function Header() {
           >
             Catalog
           </Link>
-          <Link
-            href="/#recommend"
-            className="text-foreground/60 transition-colors hover:text-foreground/80"
-          >
-            AI Recommender
-          </Link>
-           <Link
-            href="/#mix"
-            className="text-foreground/60 transition-colors hover:text-foreground/80"
-          >
-            Scent Mixer
-          </Link>
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
           {isUserLoading ? (
