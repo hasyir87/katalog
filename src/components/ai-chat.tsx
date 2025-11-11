@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Loader2, Paperclip, Send, User, Wand2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -120,7 +120,7 @@ export function AIChat() {
   }
 
   return (
-    <Card className="max-w-3xl mx-auto h-[80vh] flex flex-col">
+    <Card className="h-full flex flex-col shadow-none border-none rounded-none">
       <CardHeader className="border-b">
         <CardTitle className="flex items-center gap-2 font-headline">
           <Wand2 className="h-6 w-6 text-primary" />
