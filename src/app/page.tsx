@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useCollection, useMemoFirebase, useFirestore } from '@/firebase';
 import { PerfumeCard } from '@/components/perfume-card';
 import { RecommendationSection } from '@/components/recommendation-section';
+import { ScentMixerSection } from '@/components/scent-mixer-section';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { collection } from 'firebase/firestore';
@@ -55,6 +56,8 @@ export default function Home() {
         </section>
         
         <RecommendationSection />
+
+        <ScentMixerSection />
 
         <section id="catalog" className="w-full py-12 md:py-24 lg:py-32 bg-background/50">
           <div className="container px-4 md:px-6">
