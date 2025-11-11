@@ -21,17 +21,23 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import type { Perfume } from '@/lib/types';
 
-interface DataTableProps<TData, TValue> {
+
+interface DataTableProps<TData extends Perfume, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  onRowClick: (row: TData) => void;
+  selectedPerfumeId?: string | null;
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends Perfume, TValue>({
   columns,
   data,
+  onRowClick,
+  selectedPerfumeId
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -51,13 +57,17 @@ export function DataTable<TData, TValue>({
       sorting,
       columnFilters,
     },
+    // We don't need pagination for this view
+    // so we disable the default pagination controls
+    // by overriding the pageCount.
+    pageCount: -1,
   });
 
   return (
     <div>
         <div className="flex items-center py-4">
             <Input
-            placeholder="Filter perfumes..."
+            placeholder="Filter by name..."
             value={(table.getColumn("namaParfum")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
                 table.getColumn("namaParfum")?.setFilterValue(event.target.value)
@@ -90,10 +100,15 @@ export function DataTable<TData, TValue>({
               table.getRowModel().rows.map(row => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
+                  data-state={row.original.id === selectedPerfumeId ? 'selected' : ''}
+                  onClick={() => onRowClick(row.original)}
+                  className={cn(
+                    "cursor-pointer",
+                    row.original.id === selectedPerfumeId && "bg-muted/80 hover:bg-muted"
+                  )}
                 >
                   {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="py-2 px-3">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -114,24 +129,6 @@ export function DataTable<TData, TValue>({
             )}
           </TableBody>
         </Table>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-        </Button>
       </div>
     </div>
   );
