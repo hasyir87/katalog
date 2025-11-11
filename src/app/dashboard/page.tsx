@@ -12,10 +12,18 @@ import type { Perfume } from "@/lib/types";
 import { ExcelImporter } from "@/components/dashboard/excel-importer";
 import { useState } from "react";
 import { PerfumeDetailView } from "@/components/dashboard/perfume-detail-view";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { useIsMobile } from "@/hooks/use-mobile";
+
 
 export default function DashboardPage() {
     const firestore = useFirestore();
     const [selectedPerfume, setSelectedPerfume] = useState<Perfume | null>(null);
+    const isMobile = useIsMobile();
     
     const perfumesCollection = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -26,6 +34,10 @@ export default function DashboardPage() {
 
     const handleRowClick = (perfume: Perfume) => {
         setSelectedPerfume(perfume);
+    };
+
+    const handleCloseDetail = () => {
+        setSelectedPerfume(null);
     };
 
     if (isLoading) {
@@ -46,6 +58,22 @@ export default function DashboardPage() {
             </div>
         );
     }
+
+    const detailView = (
+        <PerfumeDetailView 
+            perfume={selectedPerfume} 
+            onClose={handleCloseDetail}
+        />
+    );
+    
+    const dataTable = (
+        <DataTable 
+            columns={columns} 
+            data={perfumes ?? []}
+            onRowClick={handleRowClick}
+            selectedPerfumeId={selectedPerfume?.id}
+        />
+    );
 
     return (
         <div className="h-[calc(100vh-5rem)] flex flex-col">
@@ -69,18 +97,26 @@ export default function DashboardPage() {
                 </div>
             </div>
             <div className="flex-grow container mx-auto overflow-hidden">
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-[2fr_1fr] gap-6 h-full py-6">
-                    <div className="h-full overflow-y-auto">
-                        <DataTable 
-                            columns={columns} 
-                            data={perfumes ?? []}
-                            onRowClick={handleRowClick}
-                            selectedPerfumeId={selectedPerfume?.id}
-                        />
+                <div className="flex gap-6 h-full py-6">
+                    <div className="flex-grow h-full overflow-y-auto">
+                        {isMobile && selectedPerfume ? (
+                            <Sheet open={!!selectedPerfume} onOpenChange={(open) => !open && handleCloseDetail()}>
+                                 <SheetTrigger asChild>
+                                     {/* The trigger is implicit via row click */}
+                                     <div style={{display: "none"}} />
+                                 </SheetTrigger>
+                                 <SheetContent side="right" className="w-full sm:max-w-md p-0">
+                                     {detailView}
+                                 </SheetContent>
+                            </Sheet>
+                        ) : null}
+                        {dataTable}
                     </div>
-                    <div className="hidden md:block h-full overflow-y-auto">
-                        <PerfumeDetailView perfume={selectedPerfume} />
-                    </div>
+                    {!isMobile && (
+                        <div className="w-1/3 flex-shrink-0 h-full overflow-y-auto">
+                            {detailView}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

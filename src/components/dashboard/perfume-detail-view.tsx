@@ -2,7 +2,7 @@
 
 import type { Perfume } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { Droplets, Flower, Milestone, User, Clock, Building, Sparkle, Edit, Trash2 } from "lucide-react";
+import { Droplets, Flower, Milestone, User, Clock, Building, Sparkle, Edit, Trash2, X, Info } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
@@ -21,16 +21,27 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { deletePerfume } from "@/lib/actions";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-export function PerfumeDetailView({ perfume }: { perfume: Perfume | null }) {
+
+interface PerfumeDetailViewProps {
+  perfume: Perfume | null;
+  onClose?: () => void;
+}
+
+
+export function PerfumeDetailView({ perfume, onClose }: PerfumeDetailViewProps) {
+    const isMobile = useIsMobile();
     
     if (!perfume) {
         return (
-            <Card className="h-full flex items-center justify-center sticky top-6">
-                <CardContent className="text-center text-muted-foreground p-6">
-                    <p>Pilih parfum dari tabel untuk melihat detailnya di sini.</p>
-                </CardContent>
-            </Card>
+            <div className="h-full flex items-center justify-center bg-secondary/30 rounded-lg border-2 border-dashed">
+                <div className="text-center text-muted-foreground p-6">
+                    <Info className="mx-auto h-10 w-10 mb-4 text-primary/50" />
+                    <h3 className="font-semibold text-lg text-foreground/80">Select a Perfume</h3>
+                    <p className="mt-1 text-sm">Click on a perfume from the table to view its details here.</p>
+                </div>
+            </div>
         );
     }
     
@@ -45,23 +56,29 @@ export function PerfumeDetailView({ perfume }: { perfume: Perfume | null }) {
     ];
 
     return (
-        <Card className="sticky top-6">
+        <Card className="h-full flex flex-col">
             <CardHeader className="flex flex-row items-start justify-between">
                 <div>
                     <Badge variant="secondary" className="mb-2">{perfume.jenisAroma}</Badge>
                     <CardTitle className="font-headline text-2xl">{perfume.namaParfum}</CardTitle>
                 </div>
                  <div className="flex gap-2">
-                    <DeleteConfirmation perfumeId={perfume.id} perfumeName={perfume.namaParfum} />
+                    <DeleteConfirmation perfumeId={perfume.id} perfumeName={perfume.namaParfum} onSuccess={onClose} />
                     <Button asChild size="icon" variant="outline">
                         <Link href={`/dashboard/edit/${perfume.id}`} title={`Edit ${perfume.namaParfum}`}>
                             <Edit className="h-4 w-4" />
                             <span className="sr-only">Edit Perfume</span>
                         </Link>
                     </Button>
+                    {isMobile && onClose && (
+                        <Button onClick={onClose} size="icon" variant="ghost">
+                            <X className="h-4 w-4" />
+                            <span className="sr-only">Close</span>
+                        </Button>
+                    )}
                 </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-grow overflow-y-auto">
                 <CardDescription>{perfume.deskripsiParfum}</CardDescription>
                 <Separator className="my-4" />
                 <h4 className="font-semibold mb-3 text-sm">Details</h4>
@@ -82,7 +99,7 @@ export function PerfumeDetailView({ perfume }: { perfume: Perfume | null }) {
 }
 
 
-const DeleteConfirmation = ({ perfumeId, perfumeName }: { perfumeId: string; perfumeName: string }) => {
+const DeleteConfirmation = ({ perfumeId, perfumeName, onSuccess }: { perfumeId: string; perfumeName: string; onSuccess?: () => void; }) => {
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -94,8 +111,7 @@ const DeleteConfirmation = ({ perfumeId, perfumeName }: { perfumeId: string; per
         title: 'Success!',
         description: `Perfume "${perfumeName}" has been deleted.`,
       });
-      // You might want to trigger a refresh of the list here
-      // This will be handled by the real-time nature of useCollection
+      onSuccess?.();
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -132,4 +148,3 @@ const DeleteConfirmation = ({ perfumeId, perfumeName }: { perfumeId: string; per
     </AlertDialog>
   );
 };
-
