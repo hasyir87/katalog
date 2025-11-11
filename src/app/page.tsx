@@ -27,10 +27,19 @@ export default function Home() {
     if (!perfumes) return [];
     if (!searchQuery) return perfumes;
 
+    const lowercasedQuery = searchQuery.toLowerCase();
+
     return perfumes.filter(perfume => 
-      perfume.namaParfum.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      perfume.jenisAroma.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      perfume.deskripsiParfum.toLowerCase().includes(searchQuery.toLowerCase())
+      perfume.namaParfum.toLowerCase().includes(lowercasedQuery) ||
+      perfume.jenisAroma.toLowerCase().includes(lowercasedQuery) ||
+      perfume.deskripsiParfum.toLowerCase().includes(lowercasedQuery) ||
+      perfume.topNotes.toLowerCase().includes(lowercasedQuery) ||
+      perfume.middleNotes.toLowerCase().includes(lowercasedQuery) ||
+      perfume.baseNotes.toLowerCase().includes(lowercasedQuery) ||
+      perfume.penggunaan.toLowerCase().includes(lowercasedQuery) ||
+      perfume.sex.toLowerCase().includes(lowercasedQuery) ||
+      perfume.lokasi.toLowerCase().includes(lowercasedQuery) ||
+      perfume.kualitas.toLowerCase().includes(lowercasedQuery)
     );
   }, [perfumes, searchQuery]);
 
@@ -81,7 +90,7 @@ export default function Home() {
             <div className="max-w-xl mx-auto my-8">
               <Input 
                 type="text"
-                placeholder="Cari berdasarkan nama, aroma, atau deskripsi..."
+                placeholder="Cari berdasarkan nama, aroma, notes, lokasi..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full text-base"
