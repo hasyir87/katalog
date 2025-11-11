@@ -1,7 +1,7 @@
 
 'use server';
 
-import { initializeApp, getApps, getApp, cert, App } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp, cert, App, ServiceAccount } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 
 let db: Firestore;
@@ -10,17 +10,23 @@ let db: Firestore;
  * Initializes the Firebase Admin SDK and returns the Firestore instance.
  * It uses a singleton pattern to ensure the app is only initialized once.
  * This function is designed to work reliably in serverless environments
- * by relying on Google's default application credentials.
+ * like Vercel by checking for the FIREBASE_SERVICE_ACCOUNT environment variable.
  */
 export async function getDb(): Promise<Firestore> {
     if (!db) {
         try {
-            // Check if any apps are already initialized.
             if (getApps().length === 0) {
-                // If not, initialize a new app. In a Google Cloud environment (like App Hosting),
-                // the SDK will automatically find the service account credentials.
-                // No need to parse process.env.FIREBASE_SERVICE_ACCOUNT.
-                initializeApp();
+                // For Vercel and other non-Google environments, use a service account key from env vars.
+                const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
+                if (serviceAccountString) {
+                    const serviceAccount: ServiceAccount = JSON.parse(serviceAccountString);
+                    initializeApp({
+                        credential: cert(serviceAccount)
+                    });
+                } else {
+                    // Fallback for Google Cloud environments (like App Hosting)
+                    initializeApp();
+                }
             }
             // Get the singleton app instance.
             const adminApp = getApp();
