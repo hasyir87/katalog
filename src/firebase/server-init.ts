@@ -14,19 +14,19 @@ let db: Firestore;
  */
 export async function getDb(): Promise<Firestore> {
     if (!db) {
+        // Vercel build environment might not have the env var set.
+        // We check for the existence of the variable before trying to initialize.
+        const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
+        if (!serviceAccountString) {
+             throw new Error("FIREBASE_SERVICE_ACCOUNT environment variable is not set. Skipping Firebase Admin initialization.");
+        }
+
         try {
             if (getApps().length === 0) {
-                // For Vercel and other non-Google environments, use a service account key from env vars.
-                const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
-                if (serviceAccountString) {
-                    const serviceAccount: ServiceAccount = JSON.parse(serviceAccountString);
-                    initializeApp({
-                        credential: cert(serviceAccount)
-                    });
-                } else {
-                    // Fallback for Google Cloud environments (like App Hosting)
-                    initializeApp();
-                }
+                const serviceAccount: ServiceAccount = JSON.parse(serviceAccountString);
+                initializeApp({
+                    credential: cert(serviceAccount)
+                });
             }
             // Get the singleton app instance.
             const adminApp = getApp();
