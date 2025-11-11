@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -18,45 +19,30 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Skeleton } from './ui/skeleton';
 import { Input } from './ui/input';
 import { useEffect, useState } from 'react';
-import { useDebounce }from 'use-debounce';
 import Image from 'next/image';
 
 function SearchBar() {
   const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [text, setText] = useState(searchParams.get('search') ?? '');
-  const [query] = useDebounce(text, 500);
+  const [query, setQuery] = useState(searchParams.get('q') ?? '');
 
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (query) {
-      params.set('search', query);
-    } else {
-      params.delete('search');
-    }
-    // We only want to update the URL on the home page
-    if (pathname === '/') {
-        router.replace(`/?${params.toString()}`);
-    }
-  }, [query, router, searchParams, pathname]);
-
-  // Only show search bar on the home page
-  if (pathname !== '/') {
-    return null;
-  }
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    router.push(`/search?q=${query}`);
+  };
 
   return (
-    <div className="relative flex-1 md:grow-0">
+    <form onSubmit={handleSearch} className="relative flex-1 md:grow-0">
       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
       <Input
         type="search"
-        placeholder="Search..."
+        placeholder="Search perfumes..."
         className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
       />
-    </div>
+    </form>
   );
 }
 
@@ -76,7 +62,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-20 items-center gap-4">
         <Link href="/" className="mr-6 flex items-center space-x-2">
-           <Image src="/Logo.png" alt="M Katalog Parfum Logo" width={40} height={40} />
+           <Image src="/logo.png" alt="M Katalog Parfum Logo" width={40} height={40} />
            <span className="font-bold font-headline text-xl hidden sm:inline-block">M Katalog Parfum</span>
         </Link>
         

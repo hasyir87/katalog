@@ -9,14 +9,11 @@ import Link from 'next/link';
 import { collection } from 'firebase/firestore';
 import type { Perfume } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useMemo, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { PublicAIChat } from '@/components/public-ai-chat';
 
 function PerfumeCatalog() {
   const firestore = useFirestore();
-  const searchParams = useSearchParams();
-  const searchQuery = searchParams.get('search') || '';
   
   const perfumesCollection = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -24,26 +21,6 @@ function PerfumeCatalog() {
   }, [firestore]);
 
   const { data: perfumes, isLoading } = useCollection<Perfume>(perfumesCollection);
-
-  const filteredPerfumes = useMemo(() => {
-    if (!perfumes) return [];
-    if (!searchQuery) return perfumes;
-
-    const lowercasedQuery = searchQuery.toLowerCase();
-
-    return perfumes.filter(perfume => 
-      perfume.namaParfum.toLowerCase().includes(lowercasedQuery) ||
-      perfume.jenisAroma.toLowerCase().includes(lowercasedQuery) ||
-      perfume.deskripsiParfum.toLowerCase().includes(lowercasedQuery) ||
-      perfume.topNotes.toLowerCase().includes(lowercasedQuery) ||
-      perfume.middleNotes.toLowerCase().includes(lowercasedQuery) ||
-      perfume.baseNotes.toLowerCase().includes(lowercasedQuery) ||
-      perfume.penggunaan.toLowerCase().includes(lowercasedQuery) ||
-      perfume.sex.toLowerCase().includes(lowercasedQuery) ||
-      perfume.lokasi.toLowerCase().includes(lowercasedQuery) ||
-      perfume.kualitas.toLowerCase().includes(lowercasedQuery)
-    );
-  }, [perfumes, searchQuery]);
 
   return (
       <section id="catalog" className="w-full py-12 md:py-24 lg:py-32 bg-background/50">
@@ -58,24 +35,22 @@ function PerfumeCatalog() {
             </div>
             {isLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8 pt-12">
-                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-96 rounded-lg" />)}
+                {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-96 rounded-lg" />)}
               </div>
-            ) : filteredPerfumes && filteredPerfumes.length > 0 ? (
+            ) : perfumes && perfumes.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8 pt-12 animate-in fade-in-0 duration-500">
-                {filteredPerfumes.map((perfume) => (
+                {perfumes.map((perfume) => (
                   <PerfumeCard key={perfume.id} perfume={perfume} />
                 ))}
               </div>
             ) : (
               <div className="text-center py-12">
                 <p className="text-lg text-muted-foreground">
-                  {searchQuery ? `Tidak ada parfum yang cocok dengan "${searchQuery}".` : 'Belum ada parfum di dalam koleksi.'}
+                  Belum ada parfum di dalam koleksi.
                 </p>
-                {!searchQuery && (
                   <Button asChild variant="link" className="mt-2">
                     <Link href="/dashboard">Tambahkan yang pertama!</Link>
                   </Button>
-                )}
               </div>
             )}
           </div>
