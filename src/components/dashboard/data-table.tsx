@@ -64,7 +64,7 @@ export function DataTable<TData extends Perfume, TValue>({
   });
 
   return (
-    <div>
+    <div className="h-full flex flex-col">
         <div className="flex items-center py-4">
             <Input
             placeholder="Filter by name..."
@@ -75,9 +75,9 @@ export function DataTable<TData extends Perfume, TValue>({
             className="max-w-sm"
             />
         </div>
-      <div className="rounded-md border">
+      <div className="rounded-md border flex-grow overflow-y-auto">
         <Table>
-          <TableHeader>
+          <TableHeader className="sticky top-0 bg-background z-10">
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => {

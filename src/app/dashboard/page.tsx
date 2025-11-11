@@ -15,9 +15,9 @@ import { PerfumeDetailView } from "@/components/dashboard/perfume-detail-view";
 import {
   Sheet,
   SheetContent,
-  SheetTrigger,
 } from "@/components/ui/sheet"
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 
 export default function DashboardPage() {
@@ -33,7 +33,8 @@ export default function DashboardPage() {
     const { data: perfumes, isLoading, error } = useCollection<Perfume>(perfumesCollection);
 
     const handleRowClick = (perfume: Perfume) => {
-        setSelectedPerfume(perfume);
+        // If the same perfume is clicked again, deselect it. Otherwise, select the new one.
+        setSelectedPerfume(prev => (prev && prev.id === perfume.id ? null : perfume));
     };
 
     const handleCloseDetail = () => {
@@ -97,8 +98,8 @@ export default function DashboardPage() {
                 </div>
             </div>
             <div className="flex-grow container mx-auto overflow-hidden">
-                <div className="flex gap-6 h-full py-6">
-                    <div className="flex-grow h-full overflow-y-auto">
+                <div className={cn("grid gap-6 h-full py-6", !isMobile && selectedPerfume ? "grid-cols-3" : "grid-cols-1")}>
+                    <div className={cn("h-full overflow-y-auto", !isMobile && selectedPerfume ? "col-span-2" : "col-span-1")}>
                         {isMobile && selectedPerfume ? (
                             <Sheet open={!!selectedPerfume} onOpenChange={(open) => !open && handleCloseDetail()}>
                                  <SheetTrigger asChild>
@@ -112,8 +113,8 @@ export default function DashboardPage() {
                         ) : null}
                         {dataTable}
                     </div>
-                    {!isMobile && (
-                        <div className="w-1/3 flex-shrink-0 h-full overflow-y-auto">
+                    {!isMobile && selectedPerfume && (
+                        <div className="col-span-1 h-full overflow-y-auto">
                             {detailView}
                         </div>
                     )}

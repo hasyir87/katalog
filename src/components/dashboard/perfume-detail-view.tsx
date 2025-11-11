@@ -33,13 +33,16 @@ interface PerfumeDetailViewProps {
 export function PerfumeDetailView({ perfume, onClose }: PerfumeDetailViewProps) {
     const isMobile = useIsMobile();
     
+    // This component will now only be rendered on desktop when a perfume is selected.
+    // The placeholder is only for mobile sheet or initial state where the component might be mounted but has no perfume.
     if (!perfume) {
+        // This state is now less common on desktop but good for robustness and mobile.
         return (
             <div className="h-full flex items-center justify-center bg-secondary/30 rounded-lg border-2 border-dashed">
                 <div className="text-center text-muted-foreground p-6">
                     <Info className="mx-auto h-10 w-10 mb-4 text-primary/50" />
-                    <h3 className="font-semibold text-lg text-foreground/80">Select a Perfume</h3>
-                    <p className="mt-1 text-sm">Click on a perfume from the table to view its details here.</p>
+                    <h3 className="font-semibold text-lg text-foreground/80">Pilih Parfum</h3>
+                    <p className="mt-1 text-sm">Klik pada parfum dari tabel untuk melihat detailnya di sini.</p>
                 </div>
             </div>
         );
@@ -70,7 +73,7 @@ export function PerfumeDetailView({ perfume, onClose }: PerfumeDetailViewProps) 
                             <span className="sr-only">Edit Perfume</span>
                         </Link>
                     </Button>
-                    {isMobile && onClose && (
+                    {(isMobile || onClose) && ( // Show close button on mobile OR if onClose is provided
                         <Button onClick={onClose} size="icon" variant="ghost">
                             <X className="h-4 w-4" />
                             <span className="sr-only">Close</span>
