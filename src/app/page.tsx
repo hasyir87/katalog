@@ -11,6 +11,7 @@ import type { Perfume } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { PublicAIChat } from '@/components/public-ai-chat';
 
 function PerfumeCatalog() {
   const firestore = useFirestore();
@@ -121,6 +122,7 @@ export default function Home() {
           <PerfumeCatalog />
         </Suspense>
       </main>
+      <PublicAIChat />
     </div>
   );
 }

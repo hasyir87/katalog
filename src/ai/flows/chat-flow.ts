@@ -2,6 +2,7 @@
 
 /**
  * @fileOverview A conversational AI chat agent that can interact with the perfume database.
+ * This is the ADMIN chat flow with write capabilities.
  *
  * - chatWithAI - A function that handles the chat process.
  */
@@ -62,7 +63,7 @@ const queryDatabase = ai.defineTool({
       .filter(item => item.matchCount > 0)
       .sort((a, b) => b.matchCount - a.matchCount);
 
-    return filteredPerfumes.slice(0, 5).map(item => ({
+    return filteredPerfumes.slice(0, 10).map(item => ({
         Number: item.perfume.number ?? 0,
         Nama_Parfum: item.perfume.namaParfum,
         Deskripsi_Parfum: item.perfume.deskripsiParfum,
@@ -115,7 +116,7 @@ const getRelevantPerfumesForMixer = ai.defineTool({
       .filter(item => item.matchCount > 0)
       .sort((a, b) => b.matchCount - a.matchCount);
 
-    return filteredPerfumes.slice(0, 5).map(item => ({
+    return filteredPerfumes.slice(0, 10).map(item => ({
         Number: item.perfume.number ?? 0,
         Nama_Parfum: item.perfume.namaParfum,
         Deskripsi_Parfum: item.perfume.deskripsiParfum,
@@ -230,6 +231,6 @@ The user has also uploaded a file. Here is its content:
       return { response: "Maaf, saya tidak dapat memproses permintaan itu. Silakan coba lagi." };
     }
 
-    return { response: finalResponse.response };
+    return { response: finalResponse };
   }
 );
