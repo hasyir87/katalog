@@ -97,29 +97,17 @@ export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
 export async function addPerfume(data: Omit<Perfume, 'id' | 'imageUrl' | 'number'>) {
   const validatedData = perfumeSchema.parse(data);
   const db = await getDb();
-  const perfumesCollection = db.collection('perfumes');
   
   try {
-    const allPerfumesSnapshot = await perfumesCollection.get();
-    let highestNumber = 0;
-    allPerfumesSnapshot.forEach(doc => {
-        const perfume = doc.data();
-        if (perfume && typeof perfume.number === 'number' && perfume.number > highestNumber) {
-            highestNumber = perfume.number;
-        }
-    });
-    const newNumber = highestNumber + 1;
-
-    const dataToSave = {
+    const docRef = await db.collection('perfumes').add({
       ...validatedData,
-      number: newNumber,
-      imageUrl: `https://picsum.photos/seed/perfume${newNumber}/400/600`,
-    };
-
-    const docRef = await perfumesCollection.add(dataToSave);
+      imageUrl: `https://picsum.photos/seed/${Math.random()}/400/600`, // Use random seed for image
+    });
+    
     revalidatePath('/');
     revalidatePath('/dashboard');
-    return { id: docRef.id, ...dataToSave };
+    
+    return { id: docRef.id, ...validatedData };
   } catch (error: any) {
      console.error("Error adding perfume: ", error);
      throw new Error('Failed to add perfume.');
@@ -165,6 +153,7 @@ export async function addPerfumesBatch(data: any[]) {
                 lokasi: result.data.Lokasi,
                 jenisAroma: result.data['Jenis Aroma'],
                 kualitas: result.data.Kualitas,
+                imageUrl: `https://picsum.photos/seed/perfume${result.data.No}/400/600`,
             };
             const docRef = db.collection('perfumes').doc(); // Auto-generate ID
             batch.set(docRef, perfumeData);
@@ -187,7 +176,7 @@ export async function addPerfumesBatch(data: any[]) {
 export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id' | 'imageUrl' | 'number'>>) {
   const validatedData = perfumeSchema.passthrough().parse(data);
   
-  const { number, ...dataToSave } = validatedData as any;
+  const { number, imageUrl, ...dataToSave } = validatedData as any;
 
   try {
     const db = await getDb();
