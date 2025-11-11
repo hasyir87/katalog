@@ -5,7 +5,6 @@ import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   getFilteredRowModel,
   useReactTable,
@@ -48,7 +47,6 @@ export function DataTable<TData extends Perfume, TValue>({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
@@ -57,10 +55,6 @@ export function DataTable<TData extends Perfume, TValue>({
       sorting,
       columnFilters,
     },
-    // We don't need pagination for this view
-    // so we disable the default pagination controls
-    // by overriding the pageCount.
-    pageCount: -1,
   });
 
   return (
