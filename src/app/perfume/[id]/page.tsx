@@ -65,10 +65,3 @@ export default async function PerfumeDetailPage({ params }: { params: { id: stri
     </div>
   );
 }
-
-export async function generateStaticParams() {
-    const perfumes = await getPerfumes();
-    return perfumes.map((perfume) => ({
-        id: perfume.id,
-    }));
-}
