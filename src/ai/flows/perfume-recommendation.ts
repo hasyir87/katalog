@@ -28,9 +28,13 @@ const getRelevantPerfumes = ai.defineTool({
     const snapshot = await perfumesCollection.get();
     const allPerfumes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
 
-    // For simplicity, we'll do a basic text search across relevant fields.
-    // A more advanced implementation might use embeddings or more complex queries.
+    // A more advanced implementation might use vector search/embeddings.
+    // For now, we perform a case-insensitive text search across multiple fields.
     const query = input.query.toLowerCase();
+    const keywords = query.split(' ').filter(kw => kw.length > 2); // Get keywords
+
+    if (keywords.length === 0) return [];
+    
     const filteredPerfumes = allPerfumes.filter(p => {
       const combinedText = [
         p.namaParfum,
@@ -44,12 +48,13 @@ const getRelevantPerfumes = ai.defineTool({
         p.sex,
         p.kualitas,
       ].join(' ').toLowerCase();
-      return combinedText.includes(query);
+       // Check if all keywords are present in the combined text
+      return keywords.every(keyword => combinedText.includes(keyword));
     });
 
     // Map to the AI schema, ensuring all fields are strings or numbers as defined.
-    return filteredPerfumes.map(p => ({
-        Number: p.number,
+    return filteredPerfumes.slice(0, 10).map(p => ({
+        Number: p.number ?? 0,
         Nama_Parfum: p.namaParfum,
         Deskripsi_Parfum: p.deskripsiParfum,
         Top_Notes: p.topNotes,

@@ -53,7 +53,7 @@ const queryDatabase = ai.defineTool({
     });
 
     // Map to the AI schema, ensuring all fields are correctly typed and named.
-    return filteredPerfumes.map(p => ({ // Limit to 10 results
+    return filteredPerfumes.slice(0, 10).map(p => ({ // Limit to 10 results
         Number: p.number ?? 0,
         Nama_Parfum: p.namaParfum,
         Deskripsi_Parfum: p.deskripsiParfum,
