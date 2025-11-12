@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useMemoFirebase } from "@/firebase";
@@ -10,6 +11,7 @@ import { useFirestore } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Perfume } from "@/lib/types";
 import { ExcelImporter } from "@/components/dashboard/excel-importer";
+import { ExcelExporter } from "@/components/dashboard/excel-exporter";
 import { useState } from "react";
 import { PerfumeDetailView } from "@/components/dashboard/perfume-detail-view";
 import {
@@ -114,6 +116,7 @@ export default function DashboardPage() {
                                 </SheetContent>
                             </Sheet>
                             <ExcelImporter />
+                            <ExcelExporter data={perfumes ?? []} />
                             <Button asChild>
                                 <Link href="/dashboard/add">
                                     <PlusCircle className="mr-2 h-4 w-4" />
