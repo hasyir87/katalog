@@ -42,8 +42,8 @@ export async function getDb(): Promise<Firestore> {
         try {
             const serviceAccount = parseServiceAccount();
 
-            if (!serviceAccount.project_id) {
-                 throw new Error("Service account object must contain a string 'project_id' property. Check if the service account JSON is correct.");
+            if (!serviceAccount.projectId) {
+                 throw new Error("Service account object must contain a string 'projectId' property. Check if the service account JSON is correct.");
             }
 
             adminApp = initializeApp({
