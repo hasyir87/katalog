@@ -66,20 +66,23 @@ export async function addPerfume(data: z.infer<typeof perfumeSchema>) {
     try {
         const db = await getDb();
         
-        // Data is already validated by the form's zodResolver. We just re-parse to be safe.
+        // 1. Validate the data from the form
         const validatedData = perfumeSchema.parse(data);
 
-        // Get the total count to determine the next number.
+        // 2. Get the current count for auto-numbering
         const countSnapshot = await db.collection('perfumes').count().get();
         const nextNumber = countSnapshot.data().count + 1;
         
+        // 3. Create the final object to be saved
         const finalData = {
             ...validatedData,
             number: nextNumber,
         };
         
+        // 4. Add to Firestore
         await db.collection('perfumes').add(finalData);
         
+        // 5. Revalidate paths
         revalidatePath('/');
         revalidatePath('/dashboard');
         
@@ -96,31 +99,17 @@ export async function addPerfume(data: z.infer<typeof perfumeSchema>) {
 export async function addPerfumesBatch(data: any[]) {
     const db = await getDb();
     const batch = db.batch();
+    const perfumesCollection = db.collection('perfumes');
 
     let successCount = 0;
     const errors: string[] = [];
 
-    const plainData = JSON.parse(JSON.stringify(data));
-
-    // Get the total count to start incrementing from.
-    const countSnapshot = await db.collection('perfumes').count().get();
+    // Get the starting count for auto-numbering
+    const countSnapshot = await perfumesCollection.count().get();
     let nextNumber = countSnapshot.data().count + 1;
 
-    plainData.forEach((item: any, index: number) => {
-        const mappedItem = {
-            'Nama Parfum': item['Nama Parfum'],
-            'Deskripsi Parfum': item['Deskripsi Parfum'],
-            'Top Notes': item['Top Notes'],
-            'Middle Notes': item['Middle Notes'],
-            'Base Notes': item['Base Notes'],
-            'Penggunaan': item.Penggunaan,
-            'Sex': item.Sex,
-            'Lokasi': item.Lokasi,
-            'Jenis Aroma': item['Jenis Aroma'],
-            'Kualitas': item.Kualitas,
-        };
-
-        const result = perfumeImportSchema.safeParse(mappedItem);
+    for (const [index, item] of data.entries()) {
+        const result = perfumeImportSchema.safeParse(item);
 
         if (result.success) {
             const perfumeData = {
@@ -136,14 +125,14 @@ export async function addPerfumesBatch(data: any[]) {
                 kualitas: result.data.Kualitas,
                 number: nextNumber, // Assign the calculated number
             };
-            const docRef = db.collection('perfumes').doc(); // Auto-generate ID
+            const docRef = perfumesCollection.doc(); // Auto-generate ID
             batch.set(docRef, perfumeData);
             successCount++;
             nextNumber++; // Increment for the next item in the batch
         } else {
              errors.push(`Row ${index + 2}: ${result.error.issues.map(i => `${i.path.join('.')} - ${i.message}`).join(', ')}`);
         }
-    });
+    };
 
     if (successCount > 0) {
         await batch.commit();
