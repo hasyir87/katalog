@@ -32,6 +32,21 @@ export const columns: ColumnDef<Perfume>[] = [
     enableHiding: false,
   },
   {
+    accessorKey: 'number',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          No.
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => <div className="font-medium">{row.getValue('number')}</div>
+  },
+  {
     accessorKey: 'kualitas',
     header: ({ column }) => {
       return (
