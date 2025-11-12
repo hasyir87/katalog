@@ -68,14 +68,10 @@ export async function addPerfume(data: Omit<Perfume, 'id' | 'number'>) {
         
         const validatedData = perfumeSchema.parse(data);
 
-        // Get the highest current number to determine the next one
-        const perfumesSnapshot = await db.collection('perfumes').orderBy('number', 'desc').limit(1).get();
-        let nextNumber = 1;
-        if (!perfumesSnapshot.empty) {
-            const lastPerfume = perfumesSnapshot.docs[0].data();
-            nextNumber = (lastPerfume.number || 0) + 1;
-        }
-
+        // Get the total count to determine the next number. This is more reliable than orderBy without an index.
+        const countSnapshot = await db.collection('perfumes').count().get();
+        const nextNumber = countSnapshot.data().count + 1;
+        
         const finalData = {
             ...validatedData,
             number: nextNumber,
@@ -105,14 +101,9 @@ export async function addPerfumesBatch(data: any[]) {
 
     const plainData = JSON.parse(JSON.stringify(data));
 
-    // Get the highest current number to start incrementing from
-    const perfumesSnapshot = await db.collection('perfumes').orderBy('number', 'desc').limit(1).get();
-    let nextNumber = 1;
-    if (!perfumesSnapshot.empty) {
-        const lastPerfume = perfumesSnapshot.docs[0].data();
-        nextNumber = (lastPerfume.number || 0) + 1;
-    }
-
+    // Get the total count to start incrementing from.
+    const countSnapshot = await db.collection('perfumes').count().get();
+    let nextNumber = countSnapshot.data().count + 1;
 
     plainData.forEach((item: any, index: number) => {
         const mappedItem = {
