@@ -14,16 +14,20 @@ let db: Firestore;
  */
 export async function getDb(): Promise<Firestore> {
     if (!db) {
-        // Vercel build environment might not have the env var set.
-        // We check for the existence of the variable before trying to initialize.
         const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
+        
+        // Throw an error if the environment variable is not set at all.
         if (!serviceAccountString) {
-             throw new Error("FIREBASE_SERVICE_ACCOUNT environment variable is not set. Skipping Firebase Admin initialization.");
+            console.error("CRITICAL: FIREBASE_SERVICE_ACCOUNT environment variable is not set.");
+            throw new Error("Firebase Admin SDK credentials are not configured on the server.");
         }
 
         try {
             if (getApps().length === 0) {
+                // The service account key might be escaped in the environment variable.
+                // We need to parse it into a valid JSON object.
                 const serviceAccount: ServiceAccount = JSON.parse(serviceAccountString);
+                
                 initializeApp({
                     credential: cert(serviceAccount)
                 });
