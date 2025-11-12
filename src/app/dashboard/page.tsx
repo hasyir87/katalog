@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useCollection, useMemoFirebase } from "@/firebase";
@@ -9,7 +8,7 @@ import { PlusCircle, Loader2, Wand2, Trash2 } from "lucide-react";
 import { DataTable } from "@/components/dashboard/data-table";
 import { columns } from "@/components/dashboard/columns";
 import { useFirestore } from '@/firebase';
-import { collection, writeBatch } from 'firebase/firestore';
+import { collection, writeBatch, doc } from 'firebase/firestore';
 import type { Perfume } from "@/lib/types";
 import { ExcelImporter } from "@/components/dashboard/excel-importer";
 import { ExcelExporter } from "@/components/dashboard/excel-exporter";
