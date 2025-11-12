@@ -62,35 +62,33 @@ export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
   }
 }
 
-export async function addPerfume(data: Omit<Perfume, 'id'>) {
+export async function addPerfume(data: Omit<Perfume, 'id' | 'number'>) {
     try {
         const db = await getDb();
-
-        // Explicitly create an object with only the fields defined in the schema
-        const dataToValidate = {
-            namaParfum: data.namaParfum,
-            deskripsiParfum: data.deskripsiParfum,
-            topNotes: data.topNotes,
-            middleNotes: data.middleNotes,
-            baseNotes: data.baseNotes,
-            penggunaan: data.penggunaan,
-            sex: data.sex,
-            lokasi: data.lokasi,
-            jenisAroma: data.jenisAroma,
-            kualitas: data.kualitas,
-        };
-
-        const validatedData = perfumeSchema.parse(dataToValidate);
         
-        const docRef = await db.collection('perfumes').add(validatedData);
+        const validatedData = perfumeSchema.parse(data);
+
+        // Get the highest current number to determine the next one
+        const perfumesSnapshot = await db.collection('perfumes').orderBy('number', 'desc').limit(1).get();
+        let nextNumber = 1;
+        if (!perfumesSnapshot.empty) {
+            const lastPerfume = perfumesSnapshot.docs[0].data();
+            nextNumber = (lastPerfume.number || 0) + 1;
+        }
+
+        const finalData = {
+            ...validatedData,
+            number: nextNumber,
+        };
+        
+        const docRef = await db.collection('perfumes').add(finalData);
         
         revalidatePath('/');
         revalidatePath('/dashboard');
         
-        return { id: docRef.id, ...validatedData };
+        return { id: docRef.id, ...finalData };
     } catch (error: any) {
         console.error("Error adding perfume: ", error);
-        // Ensure a meaningful error is thrown to the client.
         if (error instanceof z.ZodError) {
             throw new Error(`Validation failed: ${error.errors.map(e => e.message).join(', ')}`);
         }
@@ -106,6 +104,15 @@ export async function addPerfumesBatch(data: any[]) {
     const errors: string[] = [];
 
     const plainData = JSON.parse(JSON.stringify(data));
+
+    // Get the highest current number to start incrementing from
+    const perfumesSnapshot = await db.collection('perfumes').orderBy('number', 'desc').limit(1).get();
+    let nextNumber = 1;
+    if (!perfumesSnapshot.empty) {
+        const lastPerfume = perfumesSnapshot.docs[0].data();
+        nextNumber = (lastPerfume.number || 0) + 1;
+    }
+
 
     plainData.forEach((item: any, index: number) => {
         const mappedItem = {
@@ -135,10 +142,12 @@ export async function addPerfumesBatch(data: any[]) {
                 lokasi: result.data.Lokasi,
                 jenisAroma: result.data['Jenis Aroma'],
                 kualitas: result.data.Kualitas,
+                number: nextNumber, // Assign the calculated number
             };
             const docRef = db.collection('perfumes').doc(); // Auto-generate ID
             batch.set(docRef, perfumeData);
             successCount++;
+            nextNumber++; // Increment for the next item in the batch
         } else {
              errors.push(`Row ${index + 2}: ${result.error.issues.map(i => `${i.path.join('.')} - ${i.message}`).join(', ')}`);
         }
