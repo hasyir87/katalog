@@ -25,11 +25,11 @@ const perfumeImportSchema = z.object({
   'Top Notes': z.string(),
   'Middle Notes': z.string(),
   'Base Notes': z.string(),
-  Penggunaan: z.string(),
-  Sex: z.enum(['Pria', 'Wanita', 'Unisex']),
-  Lokasi: z.string(),
+  'Penggunaan': z.string(),
+  'Sex': z.enum(['Pria', 'Wanita', 'Unisex']),
+  'Lokasi': z.string(),
   'Jenis Aroma': z.string(),
-  Kualitas: z.enum(['Premium', 'Extrait']),
+  'Kualitas': z.enum(['Premium', 'Extrait']),
 });
 
 
@@ -62,7 +62,7 @@ export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
   }
 }
 
-export async function addPerfume(data: Omit<Perfume, 'id' | 'number'>) {
+export async function addPerfume(data: z.infer<typeof perfumeSchema>) {
     try {
         const db = await getDb();
         
