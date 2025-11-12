@@ -66,9 +66,10 @@ export async function addPerfume(data: Omit<Perfume, 'id' | 'number'>) {
     try {
         const db = await getDb();
         
+        // Data is already validated by the form's zodResolver. We just re-parse to be safe.
         const validatedData = perfumeSchema.parse(data);
 
-        // Get the total count to determine the next number. This is more reliable.
+        // Get the total count to determine the next number.
         const countSnapshot = await db.collection('perfumes').count().get();
         const nextNumber = countSnapshot.data().count + 1;
         
@@ -77,12 +78,12 @@ export async function addPerfume(data: Omit<Perfume, 'id' | 'number'>) {
             number: nextNumber,
         };
         
-        const docRef = await db.collection('perfumes').add(finalData);
+        await db.collection('perfumes').add(finalData);
         
         revalidatePath('/');
         revalidatePath('/dashboard');
         
-        return { id: docRef.id, ...finalData };
+        return { success: true };
     } catch (error: any) {
         console.error("Error adding perfume: ", error);
         if (error instanceof z.ZodError) {
