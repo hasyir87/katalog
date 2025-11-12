@@ -11,7 +11,7 @@ function parseServiceAccount(): ServiceAccount {
     const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
     
     if (!serviceAccountString) {
-        throw new Error("FIREBASE_SERVICE_ACCOUNT environment variable is not set.");
+        throw new Error("The FIREBASE_SERVICE_ACCOUNT environment variable is not set. Please add it to your Vercel project settings.");
     }
     
     try {
@@ -19,8 +19,8 @@ function parseServiceAccount(): ServiceAccount {
         return JSON.parse(serviceAccountString);
     } catch (e1) {
         try {
-            // If direct parsing fails, it might be an escaped string.
-            // Replace escaped newlines and remove extra backslashes.
+            // If direct parsing fails, it might be an escaped string from a CI/CD environment.
+            // Un-escape the string and try parsing again.
             const cleanedString = serviceAccountString.replace(/\\n/g, '\n').replace(/\\"/g, '"');
             return JSON.parse(cleanedString);
         } catch (e2) {
@@ -43,7 +43,7 @@ export async function getDb(): Promise<Firestore> {
             const serviceAccount = parseServiceAccount();
 
             if (!serviceAccount.project_id) {
-                 throw new Error("Service account object must contain a string 'project_id' property.");
+                 throw new Error("Service account object must contain a string 'project_id' property. Check if the service account JSON is correct.");
             }
 
             initializeApp({
