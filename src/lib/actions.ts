@@ -68,7 +68,7 @@ export async function addPerfume(data: Omit<Perfume, 'id' | 'number'>) {
         
         const validatedData = perfumeSchema.parse(data);
 
-        // Get the total count to determine the next number. This is more reliable than orderBy without an index.
+        // Get the total count to determine the next number. This is more reliable.
         const countSnapshot = await db.collection('perfumes').count().get();
         const nextNumber = countSnapshot.data().count + 1;
         
