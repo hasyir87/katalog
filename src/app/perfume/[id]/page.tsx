@@ -5,16 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Droplets, Flower, Building, User, Clock, CheckCircle, Sun, Moon, Sparkle, Milestone } from 'lucide-react';
 import { QrCodeDisplay } from '@/components/qr-code-display';
-import { Suspense } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { PerfumeDetailsClient } from './perfume-details-client';
 
-async function PerfumeDetails({ perfumeId }: { perfumeId: string }) {
-  const perfume = await getPerfumeById(perfumeId);
+
+export default async function PerfumeDetailPage({ params }: { params: { id: string } }) {
+  const perfume = await getPerfumeById(params.id);
 
   if (!perfume) {
     notFound();
   }
-  
+
   const details = [
     { icon: Droplets, label: "Top Notes", value: perfume.topNotes },
     { icon: Flower, label: "Middle Notes", value: perfume.middleNotes },
@@ -26,84 +26,44 @@ async function PerfumeDetails({ perfumeId }: { perfumeId: string }) {
   ];
 
   return (
-    <div className="grid md:grid-cols-[1fr_250px] gap-8 lg:gap-12 items-start">
-      <div className="space-y-6">
-        <Badge variant="secondary">{perfume.jenisAroma}</Badge>
-        <h1 className="text-4xl lg:text-5xl font-bold font-headline tracking-tight text-primary">
-          {perfume.namaParfum}
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          {perfume.deskripsiParfum}
-        </p>
-        <Separator />
-        <div className="grid gap-4">
-          <h3 className="text-xl font-semibold font-headline">Details</h3>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-              {details.map(detail => (
-                  <li key={detail.label} className="flex items-start">
-                      <detail.icon className="h-5 w-5 mr-3 mt-1 text-primary shrink-0" />
-                      <div>
-                          <span className="font-semibold text-sm">{detail.label}</span>
-                          <p className="text-muted-foreground">{detail.value}</p>
-                      </div>
-                  </li>
-              ))}
-          </ul>
-        </div>
-      </div>
-       <div className="flex flex-col items-center gap-6 sticky top-24">
-        <Card className="w-full max-w-sm">
-           <CardHeader>
-              <CardTitle className="text-lg font-headline">Scent QR Code</CardTitle>
-           </CardHeader>
-           <CardContent className="flex flex-col items-center gap-4">
-              <p className="text-sm text-center text-muted-foreground">Scan to discover more perfumes with the <span className="font-bold text-foreground">{perfume.jenisAroma}</span> scent profile.</p>
-              <QrCodeDisplay scentType={perfume.jenisAroma} />
-           </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-function PerfumeDetailsSkeleton() {
-  return (
-    <div className="grid md:grid-cols-[1fr_250px] gap-8 lg:gap-12 items-start">
-      <div className="space-y-6">
-        <Skeleton className="h-6 w-24 rounded-full" />
-        <Skeleton className="h-12 w-3/4" />
-        <Skeleton className="h-5 w-full" />
-        <Skeleton className="h-5 w-5/6" />
-        <Separator />
-        <div className="grid gap-4">
-          <Skeleton className="h-8 w-32" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <Skeleton className="h-5 w-5 rounded" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-4 w-32" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-col items-center gap-6 sticky top-24">
-        <Skeleton className="w-full max-w-sm h-64" />
-      </div>
-    </div>
-  );
-}
-
-
-export default async function PerfumeDetailPage({ params }: { params: { id: string } }) {
-  return (
     <div className="container mx-auto max-w-4xl py-12 md:py-16">
-      <Suspense fallback={<PerfumeDetailsSkeleton />}>
-        <PerfumeDetails perfumeId={params.id} />
-      </Suspense>
+        <div className="grid md:grid-cols-[1fr_250px] gap-8 lg:gap-12 items-start">
+            <div className="space-y-6">
+                <Badge variant="secondary">{perfume.jenisAroma}</Badge>
+                <h1 className="text-4xl lg:text-5xl font-bold font-headline tracking-tight text-primary">
+                {perfume.namaParfum}
+                </h1>
+                <p className="text-lg text-muted-foreground">
+                {perfume.deskripsiParfum}
+                </p>
+                <Separator />
+                <div className="grid gap-4">
+                <h3 className="text-xl font-semibold font-headline">Details</h3>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                    {details.map(detail => (
+                        <li key={detail.label} className="flex items-start">
+                            <detail.icon className="h-5 w-5 mr-3 mt-1 text-primary shrink-0" />
+                            <div>
+                                <span className="font-semibold text-sm">{detail.label}</span>
+                                <p className="text-muted-foreground">{detail.value}</p>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+                </div>
+            </div>
+            <div className="flex flex-col items-center gap-6 sticky top-24">
+                <Card className="w-full max-w-sm">
+                <CardHeader>
+                    <CardTitle className="text-lg font-headline">Scent QR Code</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center gap-4">
+                    <p className="text-sm text-center text-muted-foreground">Scan to discover more perfumes with the <span className="font-bold text-foreground">{perfume.jenisAroma}</span> scent profile.</p>
+                    <QrCodeDisplay scentType={perfume.jenisAroma} />
+                </CardContent>
+                </Card>
+            </div>
+        </div>
     </div>
   );
 }
