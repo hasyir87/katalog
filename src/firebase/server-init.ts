@@ -46,11 +46,10 @@ export async function getDb(): Promise<Firestore> {
                  throw new Error("Service account object must contain a string 'project_id' property. Check if the service account JSON is correct.");
             }
 
-            initializeApp({
+            adminApp = initializeApp({
                 credential: cert(serviceAccount)
             });
             
-            adminApp = getApp();
             db = getFirestore(adminApp);
 
         } catch (error: any) {
