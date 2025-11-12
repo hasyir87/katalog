@@ -10,6 +10,7 @@ import {
   useReactTable,
   type SortingState,
   type ColumnFiltersState,
+  type RowSelectionState,
 } from '@tanstack/react-table';
 
 import {
@@ -30,13 +31,17 @@ interface DataTableProps<TData extends Perfume, TValue> {
   data: TData[];
   onRowClick: (row: TData) => void;
   selectedPerfumeId?: string | null;
+  rowSelection: RowSelectionState;
+  setRowSelection: React.Dispatch<React.SetStateAction<RowSelectionState>>;
 }
 
 export function DataTable<TData extends Perfume, TValue>({
   columns,
   data,
   onRowClick,
-  selectedPerfumeId
+  selectedPerfumeId,
+  rowSelection,
+  setRowSelection,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -51,9 +56,12 @@ export function DataTable<TData extends Perfume, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onRowSelectionChange: setRowSelection,
+    getRowId: (row) => row.id, // Important for selection state to work correctly
     state: {
       sorting,
       columnFilters,
+      rowSelection,
     },
   });
 
@@ -76,7 +84,7 @@ export function DataTable<TData extends Perfume, TValue>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
                   return (
-                    <TableHead key={header.id} className="p-0">
+                    <TableHead key={header.id} className="p-0 first:pl-4">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -94,15 +102,16 @@ export function DataTable<TData extends Perfume, TValue>({
               table.getRowModel().rows.map(row => (
                 <TableRow
                   key={row.id}
-                  data-state={row.original.id === selectedPerfumeId ? 'selected' : ''}
+                  data-state={row.getIsSelected() || row.original.id === selectedPerfumeId ? 'selected' : ''}
                   onClick={() => onRowClick(row.original)}
                   className={cn(
                     "cursor-pointer",
-                    row.original.id === selectedPerfumeId && "bg-muted/80 hover:bg-muted"
+                     row.original.id === selectedPerfumeId && "bg-primary/10 hover:bg-primary/20",
+                     row.getIsSelected() && "bg-muted hover:bg-muted/80"
                   )}
                 >
                   {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id} className="py-2 px-3">
+                    <TableCell key={cell.id} className="py-2 px-4">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()

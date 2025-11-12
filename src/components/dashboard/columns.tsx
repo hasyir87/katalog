@@ -5,17 +5,28 @@ import type { Perfume } from '@/lib/types';
 import { ChevronRight, ArrowUpDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export const columns: ColumnDef<Perfume>[] = [
   {
-    id: 'number',
-    header: () => (
-      <div className="px-3 text-center w-[50px]">No.</div>
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
     ),
-    cell: ({ row, table }) => (
-       <div className="text-center">
-        {table.getSortedRowModel().rows.findIndex(sortedRow => sortedRow.id === row.id) + 1}
-      </div>
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+        onClick={(e) => e.stopPropagation()} // Prevent row click event when clicking checkbox
+      />
     ),
     enableSorting: false,
     enableHiding: false,
