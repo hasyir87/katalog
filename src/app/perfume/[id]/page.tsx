@@ -7,15 +7,17 @@ import type { Perfume } from '@/lib/types';
 import { PerfumeDetailsClient } from './perfume-details-client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
+import { use } from 'react';
 
 
-export default function PerfumeDetailPage({ params }: { params: { id: string } }) {
+export default function PerfumeDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const firestore = useFirestore();
+    const resolvedParams = use(params);
 
     const perfumeRef = useMemoFirebase(() => {
-        if (!firestore || !params.id) return null;
-        return doc(firestore, 'perfumes', params.id);
-    }, [firestore, params.id]);
+        if (!firestore || !resolvedParams.id) return null;
+        return doc(firestore, 'perfumes', resolvedParams.id);
+    }, [firestore, resolvedParams.id]);
 
     const { data: perfume, isLoading, error } = useDoc<Perfume>(perfumeRef);
 
