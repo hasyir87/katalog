@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -19,8 +20,6 @@ import { useToast } from '@/hooks/use-toast';
 import { UploadCloud, Loader2, FileCheck2, AlertCircle } from 'lucide-react';
 import { addPerfumesBatch } from '@/lib/actions';
 import { ScrollArea } from '../ui/scroll-area';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { cn } from '@/lib/utils';
 
 export function ExcelImporter() {
   const [file, setFile] = useState<File | null>(null);
@@ -48,6 +47,7 @@ export function ExcelImporter() {
 
   const handleParseFile = (fileToParse: File) => {
     setIsParsing(true);
+    setParsedData([]);
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -57,6 +57,10 @@ export function ExcelImporter() {
         const worksheet = workbook.Sheets[sheetName];
         const json = XLSX.utils.sheet_to_json(worksheet);
         setParsedData(json);
+        toast({
+            title: "File Ready",
+            description: `Found ${json.length} rows to import. Click 'Impor Data' to proceed.`
+        });
       } catch (error) {
          toast({
             variant: 'destructive',
@@ -134,10 +138,6 @@ export function ExcelImporter() {
       setIsParsing(false);
   }
 
-  const keys = parsedData.length > 0 ? Object.keys(parsedData[0]) : [];
-
-  const textWrapCols = ['Deskripsi Parfum', 'Top Notes', 'Middle Notes', 'Base Notes'];
-
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
         setOpen(isOpen)
@@ -149,7 +149,7 @@ export function ExcelImporter() {
           Impor dari Excel
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Impor Parfum dari File Excel</DialogTitle>
           <DialogDescription>
@@ -160,43 +160,20 @@ export function ExcelImporter() {
           <Label htmlFor="excel-file" className="sr-only">
             Pilih file Excel
           </Label>
-          <Input id="excel-file" type="file" onChange={handleFileChange} accept=".xlsx" className="text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
+          <Input id="excel-file" type="file" onChange={handleFileChange} accept=".xlsx" className="text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" disabled={isParsing || isImporting} />
         </div>
 
         {isParsing && (
-            <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+            <div className="flex items-center justify-center h-20">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="ml-4 text-muted-foreground">Membaca file...</p>
             </div>
         )}
 
-        {parsedData.length > 0 && (
-            <div>
-                <h4 className="font-semibold mb-2">Pratinjau Data ({parsedData.length} baris)</h4>
-                 <ScrollArea className="h-72 w-full rounded-md border">
-                    <Table>
-                        <TableHeader className="sticky top-0 bg-background">
-                            <TableRow>
-                                {keys.map(key => (
-                                    <TableHead key={key} className={cn(textWrapCols.includes(key) && "min-w-[150px]")}>{key}</TableHead>
-                                ))}
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {parsedData.map((row, rowIndex) => (
-                                <TableRow key={rowIndex}>
-                                    {keys.map(key => (
-                                        <TableCell 
-                                            key={`${rowIndex}-${key}`} 
-                                            className={cn("text-xs", textWrapCols.includes(key) && "whitespace-normal")}
-                                        >
-                                            {row[key]}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </ScrollArea>
+        {parsedData.length > 0 && !isParsing && (
+             <div className="flex items-center justify-center h-20 bg-secondary/30 rounded-lg border-2 border-dashed">
+                <FileCheck2 className="h-8 w-8 text-green-600" />
+                <p className="ml-4 text-muted-foreground">{`Siap mengimpor ${parsedData.length} baris.`}</p>
             </div>
         )}
 
@@ -204,7 +181,7 @@ export function ExcelImporter() {
           <DialogClose asChild>
             <Button variant="outline" disabled={isImporting}>Batal</Button>
           </DialogClose>
-          <Button onClick={handleImport} disabled={!file || parsedData.length === 0 || isImporting}>
+          <Button onClick={handleImport} disabled={!file || parsedData.length === 0 || isImporting || isParsing}>
             {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Impor Data'}
           </Button>
         </DialogFooter>
