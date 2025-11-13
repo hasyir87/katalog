@@ -6,7 +6,7 @@ import { getDb } from '@/firebase/server-init';
 import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
 
-// Unified and robust schema for all perfume data operations.
+// Schema ini sekarang hanya untuk referensi tipe data, validasi utama ada di klien.
 const perfumeSchema = z.object({
   namaParfum: z.string().min(2, 'Name must be at least 2 characters long.'),
   deskripsiParfum: z.string().min(10, 'Description must be at least 10 characters long.'),
@@ -14,10 +14,10 @@ const perfumeSchema = z.object({
   middleNotes: z.string().min(2, 'Middle notes are required.'),
   baseNotes: z.string().min(2, 'Base notes are required.'),
   penggunaan: z.string().min(2, 'Usage context is required.'),
-  sex: z.string().min(2, 'Sex is required.'), // Simplified to string
+  sex: z.enum(['Male', 'Female', 'Unisex']),
   lokasi: z.string().min(2, 'Location/Occasion is required.'),
   jenisAroma: z.string().min(2, 'Scent type is required.'),
-  kualitas: z.string().min(2, 'Quality is required.'), // Simplified to string
+  kualitas: z.enum(['Premium', 'Extrait']),
 });
 
 export async function getPerfumes(): Promise<Perfume[]> {
@@ -41,23 +41,27 @@ export async function addPerfume(data: z.infer<typeof perfumeSchema>) {
     const db = await getDb();
     const perfumesCollection = db.collection('perfumes');
 
-    // 1. Validate the incoming data from the form.
-    const validatedData = perfumeSchema.parse(data);
-
-    // 2. Reliably get the next number.
+    // Dapatkan nomor urut berikutnya dengan andal
     const countSnapshot = await perfumesCollection.count().get();
     const nextNumber = countSnapshot.data().count + 1;
-    
-    // 3. Create a clean, final object for Firestore.
+
+    // Buat objek data yang bersih untuk disimpan
     const finalData = {
-        ...validatedData,
+        namaParfum: data.namaParfum,
+        deskripsiParfum: data.deskripsiParfum,
+        topNotes: data.topNotes,
+        middleNotes: data.middleNotes,
+        baseNotes: data.baseNotes,
+        penggunaan: data.penggunaan,
+        sex: data.sex,
+        lokasi: data.lokasi,
+        jenisAroma: data.jenisAroma,
+        kualitas: data.kualitas,
         number: nextNumber,
     };
     
-    // 4. Add the document.
     await perfumesCollection.add(finalData);
     
-    // 5. Revalidate paths.
     revalidatePath('/');
     revalidatePath('/dashboard');
 }
@@ -76,7 +80,6 @@ export async function addPerfumesBatch(data: any[]) {
 
     for (const [index, item] of data.entries()) {
         try {
-            // Map Excel columns to our schema fields
             const mappedItem = {
                 namaParfum: item['Nama Parfum'],
                 deskripsiParfum: item['Deskripsi Parfum'],
@@ -122,6 +125,7 @@ export async function addPerfumesBatch(data: any[]) {
 
 
 export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'>>) {
+    // Validasi parsial tetap berguna untuk pembaruan
     const validatedData = perfumeSchema.partial().parse(data);
 
     const db = await getDb();
