@@ -6,18 +6,21 @@ import { getDb } from '@/firebase/server-init';
 import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
 
+// Skema Zod yang disempurnakan sebagai satu-satunya sumber kebenaran.
+// Menggunakan transform untuk secara otomatis mengonversi input.
 const perfumeSchema = z.object({
-  namaParfum: z.string().min(2, 'Name must be at least 2 characters long.'),
-  deskripsiParfum: z.string().min(10, 'Description must be at least 10 characters long.'),
-  topNotes: z.string().min(2, 'Top notes are required.'),
-  middleNotes: z.string().min(2, 'Middle notes are required.'),
-  baseNotes: z.string().min(2, 'Base notes are required.'),
-  penggunaan: z.string().min(2, 'Usage context is required.'),
-  sex: z.enum(['Male', 'Female', 'Unisex']),
-  lokasi: z.string().min(2, 'Location/Occasion is required.'),
-  jenisAroma: z.string().min(2, 'Scent type is required.'),
-  kualitas: z.enum(['Premium', 'Extrait']),
+  namaParfum: z.string().min(2, 'Nama harus memiliki setidaknya 2 karakter.'),
+  deskripsiParfum: z.string().min(10, 'Deskripsi harus memiliki setidaknya 10 karakter.'),
+  topNotes: z.string().min(2, 'Top notes diperlukan.'),
+  middleNotes: z.string().min(2, 'Middle notes diperlukan.'),
+  baseNotes: z.string().min(2, 'Base notes diperlukan.'),
+  penggunaan: z.string().min(2, 'Konteks penggunaan diperlukan.'),
+  sex: z.string(), // Divalidasi oleh Select, di sini hanya memastikan itu string
+  lokasi: z.string().min(2, 'Lokasi/kesempatan diperlukan.'),
+  jenisAroma: z.string().min(2, 'Jenis aroma diperlukan.'),
+  kualitas: z.string(), // Divalidasi oleh Select, di sini hanya memastikan itu string
 });
+
 
 export async function getPerfumes(): Promise<Perfume[]> {
   const db = await getDb();
@@ -38,24 +41,26 @@ export async function getPerfumeById(id: string): Promise<Perfume | null> {
     return { id: doc.id, ...doc.data() } as Perfume;
 }
 
-
 export async function addPerfume(data: z.infer<typeof perfumeSchema>) {
-  const db = await getDb();
-  const perfumesCollection = db.collection('perfumes');
-  
-  const countSnapshot = await perfumesCollection.count().get();
-  const nextNumber = countSnapshot.data().count + 1;
+    // Validasi data di sisi server sebagai lapisan keamanan.
+    const validatedData = perfumeSchema.parse(data);
 
-  const finalData = {
-    ...data,
-    number: nextNumber,
-    createdAt: new Date().toISOString(),
-  };
+    const db = await getDb();
+    const perfumesCollection = db.collection('perfumes');
 
-  await perfumesCollection.add(finalData);
+    const countSnapshot = await perfumesCollection.count().get();
+    const nextNumber = countSnapshot.data().count + 1;
 
-  revalidatePath('/');
-  revalidatePath('/dashboard');
+    const finalData = {
+      ...validatedData,
+      number: nextNumber,
+      createdAt: new Date().toISOString(),
+    };
+
+    await perfumesCollection.add(finalData);
+
+    revalidatePath('/');
+    revalidatePath('/dashboard');
 }
 
 export async function updatePerfume(id: string, data: z.infer<typeof perfumeSchema>) {
@@ -91,11 +96,11 @@ export async function addPerfumesBatch(data: any[]) {
     let successCount = 0;
 
     const countSnapshot = await perfumesCollection.count().get();
-    let nextNumber = countSnapshot.data().count + 1;
+    let nextNumber = countSnapshot.data().count; // Mulai dari hitungan saat ini
 
     for (let i = 0; i < data.length; i++) {
         const row = data[i];
-        const rowNum = i + 2;
+        const rowNum = i + 2; // Asumsi baris data Excel dimulai dari baris 2
 
         try {
             const mappedData = {
@@ -105,18 +110,20 @@ export async function addPerfumesBatch(data: any[]) {
                 middleNotes: row['Middle Notes'] || '',
                 baseNotes: row['Base Notes'] || '',
                 penggunaan: row['Penggunaan'] || '',
-                sex: (row['Sex'] === 'Pria' ? 'Male' : row['Sex'] === 'Wanita' ? 'Female' : 'Unisex') as 'Male' | 'Female' | 'Unisex',
+                sex: row['Sex'] || 'Unisex',
                 lokasi: row['Lokasi'] || '',
                 jenisAroma: row['Jenis Aroma'] || '',
-                kualitas: row['Kualitas'] as 'Premium' | 'Extrait',
+                kualitas: row['Kualitas'] || 'Premium',
             };
 
+            // Gunakan skema yang sama dengan form untuk validasi
             const validatedData = perfumeSchema.parse(mappedData);
 
+            nextNumber++; // Increment nomor untuk dokumen baru
             const docRef = perfumesCollection.doc(); // Auto-generate ID
             batch.set(docRef, {
                 ...validatedData,
-                number: nextNumber++,
+                number: nextNumber,
                 createdAt: new Date().toISOString(),
             });
             successCount++;
