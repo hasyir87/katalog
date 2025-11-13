@@ -53,22 +53,20 @@ export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
 }
 
 export async function addPerfume(data: z.infer<typeof perfumeSchema>) {
-    // Validasi sudah dilakukan di client dengan zodResolver.
-    // Server action ini mempercayai data yang masuk sudah valid.
-    // Menghapus try-catch yang salah akan memunculkan error asli dari Firestore jika ada.
     const db = await getDb();
-    
-    // Gunakan count() untuk cara yang andal mendapatkan jumlah dokumen
-    const countSnapshot = await db.collection('perfumes').count().get();
+    const perfumesCollection = db.collection('perfumes');
+
+    // Use count() for a reliable way to get the number of documents
+    const countSnapshot = await perfumesCollection.count().get();
     const nextNumber = countSnapshot.data().count + 1;
     
-    // Buat objek final yang akan disimpan untuk memastikan struktur data bersih
+    // Create the final object to be stored to ensure a clean data structure
     const finalData = {
         ...data,
         number: nextNumber,
     };
     
-    await db.collection('perfumes').add(finalData);
+    await perfumesCollection.add(finalData);
     
     revalidatePath('/');
     revalidatePath('/dashboard');
@@ -82,6 +80,7 @@ export async function addPerfumesBatch(data: any[]) {
     let successCount = 0;
     const errors: string[] = [];
 
+    // Get the initial count ONCE before the loop
     const countSnapshot = await perfumesCollection.count().get();
     let nextNumber = countSnapshot.data().count + 1;
 
@@ -100,12 +99,12 @@ export async function addPerfumesBatch(data: any[]) {
                 lokasi: result.data.Lokasi,
                 jenisAroma: result.data['Jenis Aroma'],
                 kualitas: result.data.Kualitas,
-                number: nextNumber,
+                number: nextNumber, // Assign the incrementing number
             };
             const docRef = perfumesCollection.doc();
             batch.set(docRef, perfumeData);
             successCount++;
-            nextNumber++;
+            nextNumber++; // Increment for the next valid item
         } else {
              errors.push(`Row ${index + 2}: ${result.error.issues.map(i => `${i.path.join('.')} - ${i.message}`).join(', ')}`);
         }
@@ -122,7 +121,7 @@ export async function addPerfumesBatch(data: any[]) {
 }
 
 export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'>>) {
-    // Validasi data yang masuk sebelum diupdate
+    // Validate incoming data before updating
     const validatedData = perfumeSchema.partial().parse(data);
 
     const db = await getDb();

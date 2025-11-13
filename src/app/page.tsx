@@ -48,9 +48,7 @@ function PerfumeCatalog() {
                 <p className="text-lg text-muted-foreground">
                   Belum ada parfum di dalam koleksi.
                 </p>
-                  <Button asChild variant="link" className="mt-2">
-                    <Link href="/dashboard">Tambahkan yang pertama!</Link>
-                  </Button>
+                  
               </div>
             )}
           </div>
@@ -86,9 +84,7 @@ export default function Home() {
                 <Button asChild size="lg">
                   <Link href="#catalog">Jelajahi Katalog</Link>
                 </Button>
-                <Button asChild size="lg" variant="secondary">
-                  <Link href="/dashboard">Kelola Koleksi</Link>
-                </Button>
+               
               </div>
             </div>
           </div>
