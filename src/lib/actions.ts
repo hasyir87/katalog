@@ -36,63 +36,42 @@ const perfumeImportSchema = z.object({
 // --- Perfume Actions ---
 
 export async function getPerfumes(): Promise<Perfume[]> {
-    try {
-        const db = await getDb();
-        const perfumesCollection = db.collection('perfumes');
-        const snapshot = await perfumesCollection.orderBy('namaParfum').get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
-    } catch (error: any) {
-        console.error("Error fetching perfumes: ", error.message);
-        throw new Error(`Failed to fetch perfumes: ${error.message}`);
-    }
+    const db = await getDb();
+    const perfumesCollection = db.collection('perfumes');
+    const snapshot = await perfumesCollection.orderBy('namaParfum').get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Perfume));
 }
 
 
 export async function getPerfumeById(id: string): Promise<Perfume | undefined> {
-  try {
     const db = await getDb();
     const docSnap = await db.collection('perfumes').doc(id).get();
     if (docSnap.exists) {
       return { id: docSnap.id, ...docSnap.data() } as Perfume;
     }
     return undefined;
-  } catch (error: any) {
-    console.error("Error fetching perfume by ID: ", error.message);
-    throw new Error(`Failed to fetch perfume: ${error.message}`);
-  }
 }
 
 export async function addPerfume(data: z.infer<typeof perfumeSchema>) {
-    try {
-        const db = await getDb();
-        
-        // Data from the form is already validated by zodResolver on the client.
-        // We calculate the next number for the new perfume.
-        const countSnapshot = await db.collection('perfumes').count().get();
-        const nextNumber = countSnapshot.data().count + 1;
-        
-        // Create the final object to be saved, combining form data with the new number.
-        const finalData = {
-            ...data,
-            number: nextNumber,
-        };
-        
-        // Add the clean, final data to Firestore.
-        await db.collection('perfumes').add(finalData);
-        
-        // Revalidate paths to update the UI.
-        revalidatePath('/');
-        revalidatePath('/dashboard');
-        
-        return { success: true };
-    } catch (error: any) {
-        console.error("Error adding perfume: ", error);
-        // We still keep ZodError check in case of direct server action calls without client validation
-        if (error instanceof z.ZodError) {
-            throw new Error(`Validation failed: ${error.errors.map(e => e.message).join(', ')}`);
-        }
-        throw new Error(error.message || 'Failed to add perfume.');
-    }
+    // Validasi sudah dilakukan di client dengan zodResolver.
+    // Server action ini mempercayai data yang masuk sudah valid.
+    // Menghapus try-catch yang salah akan memunculkan error asli dari Firestore jika ada.
+    const db = await getDb();
+    
+    // Gunakan count() untuk cara yang andal mendapatkan jumlah dokumen
+    const countSnapshot = await db.collection('perfumes').count().get();
+    const nextNumber = countSnapshot.data().count + 1;
+    
+    // Buat objek final yang akan disimpan untuk memastikan struktur data bersih
+    const finalData = {
+        ...data,
+        number: nextNumber,
+    };
+    
+    await db.collection('perfumes').add(finalData);
+    
+    revalidatePath('/');
+    revalidatePath('/dashboard');
 }
 
 export async function addPerfumesBatch(data: any[]) {
@@ -103,7 +82,6 @@ export async function addPerfumesBatch(data: any[]) {
     let successCount = 0;
     const errors: string[] = [];
 
-    // Get the starting count for auto-numbering
     const countSnapshot = await perfumesCollection.count().get();
     let nextNumber = countSnapshot.data().count + 1;
 
@@ -122,12 +100,12 @@ export async function addPerfumesBatch(data: any[]) {
                 lokasi: result.data.Lokasi,
                 jenisAroma: result.data['Jenis Aroma'],
                 kualitas: result.data.Kualitas,
-                number: nextNumber, // Assign the calculated number
+                number: nextNumber,
             };
-            const docRef = perfumesCollection.doc(); // Auto-generate ID
+            const docRef = perfumesCollection.doc();
             batch.set(docRef, perfumeData);
             successCount++;
-            nextNumber++; // Increment for the next item in the batch
+            nextNumber++;
         } else {
              errors.push(`Row ${index + 2}: ${result.error.issues.map(i => `${i.path.join('.')} - ${i.message}`).join(', ')}`);
         }
@@ -144,26 +122,22 @@ export async function addPerfumesBatch(data: any[]) {
 }
 
 export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'>>) {
-  const validatedData = perfumeSchema.partial().parse(data);
+    // Validasi data yang masuk sebelum diupdate
+    const validatedData = perfumeSchema.partial().parse(data);
 
-  try {
     const db = await getDb();
     const docRef = db.collection('perfumes').doc(id);
     await docRef.update(validatedData);
+
     revalidatePath('/');
     revalidatePath('/dashboard');
     revalidatePath(`/perfume/${id}`);
     if (validatedData.jenisAroma) {
         revalidatePath(`/aroma/${validatedData.jenisAroma}`);
     }
-  } catch (error: any) {
-    console.error("Error updating perfume: ", error.message);
-    throw new Error('Failed to update perfume.');
-  }
 }
 
 export async function deletePerfume(id: string) {
-  try {
     const db = await getDb();
     const docRef = db.collection('perfumes').doc(id);
     const docSnap = await docRef.get();
@@ -176,12 +150,7 @@ export async function deletePerfume(id: string) {
         if (perfume.jenisAroma) {
             revalidatePath(`/aroma/${perfume.jenisAroma}`);
         }
-        return { message: 'Perfume deleted successfully' };
     } else {
         throw new Error('Perfume not found');
     }
-  } catch (error: any) {
-     console.error("Error deleting perfume: ", error.message);
-     throw new Error(error.message || 'Failed to delete perfume.');
-  }
 }
