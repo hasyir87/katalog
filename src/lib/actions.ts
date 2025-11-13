@@ -6,7 +6,7 @@ import { getDb } from '@/firebase/server-init';
 import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
 
-// Schema ini sekarang hanya untuk referensi tipe data, validasi utama ada di klien.
+// Skema dasar untuk data parfum.
 const perfumeSchema = z.object({
   namaParfum: z.string().min(2, 'Name must be at least 2 characters long.'),
   deskripsiParfum: z.string().min(10, 'Description must be at least 10 characters long.'),
@@ -41,11 +41,11 @@ export async function addPerfume(data: z.infer<typeof perfumeSchema>) {
     const db = await getDb();
     const perfumesCollection = db.collection('perfumes');
 
-    // Dapatkan nomor urut berikutnya dengan andal
+    // 1. Dapatkan nomor urut berikutnya dengan andal
     const countSnapshot = await perfumesCollection.count().get();
     const nextNumber = countSnapshot.data().count + 1;
 
-    // Buat objek data yang bersih untuk disimpan
+    // 2. Buat objek data yang bersih dan murni (POJO) secara manual
     const finalData = {
         namaParfum: data.namaParfum,
         deskripsiParfum: data.deskripsiParfum,
@@ -60,6 +60,7 @@ export async function addPerfume(data: z.infer<typeof perfumeSchema>) {
         number: nextNumber,
     };
     
+    // 3. Simpan objek yang dijamin bersih
     await perfumesCollection.add(finalData);
     
     revalidatePath('/');
@@ -80,17 +81,18 @@ export async function addPerfumesBatch(data: any[]) {
 
     for (const [index, item] of data.entries()) {
         try {
+            // Pemetaan manual dari nama kolom Excel
             const mappedItem = {
-                namaParfum: item['Nama Parfum'],
-                deskripsiParfum: item['Deskripsi Parfum'],
-                topNotes: item['Top Notes'],
-                middleNotes: item['Middle Notes'],
-                baseNotes: item['Base Notes'],
-                penggunaan: item.Penggunaan,
+                namaParfum: item['Nama Parfum'] || '',
+                deskripsiParfum: item['Deskripsi Parfum'] || '',
+                topNotes: item['Top Notes'] || '',
+                middleNotes: item['Middle Notes'] || '',
+                baseNotes: item['Base Notes'] || '',
+                penggunaan: item.Penggunaan || '',
                 sex: item.Sex === 'Pria' ? 'Male' : (item.Sex === 'Wanita' ? 'Female' : 'Unisex'),
-                lokasi: item.Lokasi,
-                jenisAroma: item['Jenis Aroma'],
-                kualitas: item.Kualitas,
+                lokasi: item.Lokasi || '',
+                jenisAroma: item['Jenis Aroma'] || '',
+                kualitas: item.Kualitas || '',
             };
 
             const validatedData = perfumeSchema.parse(mappedItem);
@@ -125,7 +127,6 @@ export async function addPerfumesBatch(data: any[]) {
 
 
 export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'>>) {
-    // Validasi parsial tetap berguna untuk pembaruan
     const validatedData = perfumeSchema.partial().parse(data);
 
     const db = await getDb();
