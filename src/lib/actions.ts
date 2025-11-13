@@ -6,6 +6,7 @@ import { getDb } from '@/firebase/server-init';
 import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
 
+// This schema is for validating data coming from the client-side form.
 const perfumeSchema = z.object({
   namaParfum: z.string().min(2, 'Name must be at least 2 characters long.'),
   deskripsiParfum: z.string().min(10, 'Description must be at least 10 characters long.'),
@@ -19,6 +20,7 @@ const perfumeSchema = z.object({
   kualitas: z.enum(['Premium', 'Extrait']),
 });
 
+// This schema is specifically for validating data from Excel import.
 const perfumeImportSchema = z.object({
   'Nama Parfum': z.string().min(2),
   'Deskripsi Parfum': z.string().min(10),
@@ -56,13 +58,23 @@ export async function addPerfume(data: z.infer<typeof perfumeSchema>) {
     const db = await getDb();
     const perfumesCollection = db.collection('perfumes');
 
-    // Use count() for a reliable way to get the number of documents
+    // Use count() for a reliable and efficient way to get the number of documents.
     const countSnapshot = await perfumesCollection.count().get();
     const nextNumber = countSnapshot.data().count + 1;
     
-    // Create the final object to be stored to ensure a clean data structure
+    // Explicitly create a new, clean object to be stored.
+    // This prevents any potential issues with object prototypes or serialization from Server Actions.
     const finalData = {
-        ...data,
+        namaParfum: data.namaParfum,
+        deskripsiParfum: data.deskripsiParfum,
+        topNotes: data.topNotes,
+        middleNotes: data.middleNotes,
+        baseNotes: data.baseNotes,
+        penggunaan: data.penggunaan,
+        sex: data.sex,
+        lokasi: data.lokasi,
+        jenisAroma: data.jenisAroma,
+        kualitas: data.kualitas,
         number: nextNumber,
     };
     
@@ -80,7 +92,7 @@ export async function addPerfumesBatch(data: any[]) {
     let successCount = 0;
     const errors: string[] = [];
 
-    // Get the initial count ONCE before the loop
+    // Get the initial count ONCE before the loop for efficiency.
     const countSnapshot = await perfumesCollection.count().get();
     let nextNumber = countSnapshot.data().count + 1;
 
@@ -88,6 +100,7 @@ export async function addPerfumesBatch(data: any[]) {
         const result = perfumeImportSchema.safeParse(item);
 
         if (result.success) {
+            // Create a clean data object for Firestore
             const perfumeData = {
                 namaParfum: result.data['Nama Parfum'],
                 deskripsiParfum: result.data['Deskripsi Parfum'],
@@ -153,3 +166,4 @@ export async function deletePerfume(id: string) {
         throw new Error('Perfume not found');
     }
 }
+
