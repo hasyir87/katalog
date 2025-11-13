@@ -6,7 +6,7 @@ import { getDb } from '@/firebase/server-init';
 import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
 
-// This schema is for validating data coming from the client-side form.
+// Unified and robust schema for all perfume data operations.
 const perfumeSchema = z.object({
   namaParfum: z.string().min(2, 'Name must be at least 2 characters long.'),
   deskripsiParfum: z.string().min(10, 'Description must be at least 10 characters long.'),
@@ -19,23 +19,6 @@ const perfumeSchema = z.object({
   jenisAroma: z.string().min(2, 'Scent type is required.'),
   kualitas: z.enum(['Premium', 'Extrait']),
 });
-
-// This schema is specifically for validating data from Excel import.
-const perfumeImportSchema = z.object({
-  'Nama Parfum': z.string().min(2),
-  'Deskripsi Parfum': z.string().min(10),
-  'Top Notes': z.string(),
-  'Middle Notes': z.string(),
-  'Base Notes': z.string(),
-  'Penggunaan': z.string(),
-  'Sex': z.enum(['Pria', 'Wanita', 'Unisex']),
-  'Lokasi': z.string(),
-  'Jenis Aroma': z.string(),
-  'Kualitas': z.enum(['Premium', 'Extrait']),
-});
-
-
-// --- Perfume Actions ---
 
 export async function getPerfumes(): Promise<Perfume[]> {
     const db = await getDb();
@@ -58,31 +41,27 @@ export async function addPerfume(data: z.infer<typeof perfumeSchema>) {
     const db = await getDb();
     const perfumesCollection = db.collection('perfumes');
 
-    // Use count() for a reliable and efficient way to get the number of documents.
+    // 1. Validate the incoming data from the form.
+    const validatedData = perfumeSchema.parse(data);
+
+    // 2. Reliably get the next number.
     const countSnapshot = await perfumesCollection.count().get();
     const nextNumber = countSnapshot.data().count + 1;
     
-    // Explicitly create a new, clean object to be stored.
-    // This prevents any potential issues with object prototypes or serialization from Server Actions.
+    // 3. Create a clean, final object for Firestore.
     const finalData = {
-        namaParfum: data.namaParfum,
-        deskripsiParfum: data.deskripsiParfum,
-        topNotes: data.topNotes,
-        middleNotes: data.middleNotes,
-        baseNotes: data.baseNotes,
-        penggunaan: data.penggunaan,
-        sex: data.sex,
-        lokasi: data.lokasi,
-        jenisAroma: data.jenisAroma,
-        kualitas: data.kualitas,
+        ...validatedData,
         number: nextNumber,
     };
     
+    // 4. Add the document.
     await perfumesCollection.add(finalData);
     
+    // 5. Revalidate paths.
     revalidatePath('/');
     revalidatePath('/dashboard');
 }
+
 
 export async function addPerfumesBatch(data: any[]) {
     const db = await getDb();
@@ -92,34 +71,42 @@ export async function addPerfumesBatch(data: any[]) {
     let successCount = 0;
     const errors: string[] = [];
 
-    // Get the initial count ONCE before the loop for efficiency.
     const countSnapshot = await perfumesCollection.count().get();
     let nextNumber = countSnapshot.data().count + 1;
 
     for (const [index, item] of data.entries()) {
-        const result = perfumeImportSchema.safeParse(item);
-
-        if (result.success) {
-            // Create a clean data object for Firestore
-            const perfumeData = {
-                namaParfum: result.data['Nama Parfum'],
-                deskripsiParfum: result.data['Deskripsi Parfum'],
-                topNotes: result.data['Top Notes'],
-                middleNotes: result.data['Middle Notes'],
-                baseNotes: result.data['Base Notes'],
-                penggunaan: result.data.Penggunaan,
-                sex: result.data.Sex === 'Pria' ? 'Male' : (result.data.Sex === 'Wanita' ? 'Female' : 'Unisex'),
-                lokasi: result.data.Lokasi,
-                jenisAroma: result.data['Jenis Aroma'],
-                kualitas: result.data.Kualitas,
-                number: nextNumber, // Assign the incrementing number
+        try {
+            // Map Excel columns to our schema fields
+            const mappedItem = {
+                namaParfum: item['Nama Parfum'],
+                deskripsiParfum: item['Deskripsi Parfum'],
+                topNotes: item['Top Notes'],
+                middleNotes: item['Middle Notes'],
+                baseNotes: item['Base Notes'],
+                penggunaan: item.Penggunaan,
+                sex: item.Sex === 'Pria' ? 'Male' : (item.Sex === 'Wanita' ? 'Female' : 'Unisex'),
+                lokasi: item.Lokasi,
+                jenisAroma: item['Jenis Aroma'],
+                kualitas: item.Kualitas,
             };
+
+            const validatedData = perfumeSchema.parse(mappedItem);
+            
+            const finalData = {
+                ...validatedData,
+                number: nextNumber,
+            };
+
             const docRef = perfumesCollection.doc();
-            batch.set(docRef, perfumeData);
+            batch.set(docRef, finalData);
             successCount++;
-            nextNumber++; // Increment for the next valid item
-        } else {
-             errors.push(`Row ${index + 2}: ${result.error.issues.map(i => `${i.path.join('.')} - ${i.message}`).join(', ')}`);
+            nextNumber++;
+
+        } catch (error: any) {
+             const errorMessage = error instanceof z.ZodError
+                ? error.issues.map(i => `${i.path.join('.')} - ${i.message}`).join(', ')
+                : 'Invalid data format.';
+             errors.push(`Row ${index + 2}: ${errorMessage}`);
         }
     };
 
@@ -133,8 +120,8 @@ export async function addPerfumesBatch(data: any[]) {
     return { successCount, errors };
 }
 
+
 export async function updatePerfume(id: string, data: Partial<Omit<Perfume, 'id'>>) {
-    // Validate incoming data before updating
     const validatedData = perfumeSchema.partial().parse(data);
 
     const db = await getDb();
@@ -166,4 +153,3 @@ export async function deletePerfume(id: string) {
         throw new Error('Perfume not found');
     }
 }
-
