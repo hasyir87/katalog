@@ -40,8 +40,6 @@ export async function getPerfumeById(id: string): Promise<Perfume | null> {
 
 
 export async function addPerfume(data: z.infer<typeof perfumeSchema>) {
-  const validatedData = perfumeSchema.parse(data);
-
   const db = await getDb();
   const perfumesCollection = db.collection('perfumes');
   
@@ -49,7 +47,7 @@ export async function addPerfume(data: z.infer<typeof perfumeSchema>) {
   const nextNumber = countSnapshot.data().count + 1;
 
   const finalData = {
-    ...validatedData,
+    ...data,
     number: nextNumber,
     createdAt: new Date().toISOString(),
   };

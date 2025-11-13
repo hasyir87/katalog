@@ -1,7 +1,7 @@
 
 'use server';
 
-import { initializeApp, getApps, getApp, cert, App } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp, cert, App, ServiceAccount } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 
 let db: Firestore;
@@ -21,7 +21,7 @@ export async function getDb(): Promise<Firestore> {
                 throw new Error("The FIREBASE_SERVICE_ACCOUNT environment variable is not set. Please add it to your project settings.");
             }
 
-            const serviceAccount = JSON.parse(serviceAccountString);
+            const serviceAccount = JSON.parse(serviceAccountString) as ServiceAccount;
 
             if (!serviceAccount.project_id) {
                  throw new Error("Service account object must contain a string 'project_id' property. Check if the service account JSON is correct.");
