@@ -21,6 +21,7 @@ export async function getDb(): Promise<Firestore> {
             let serviceAccount: ServiceAccount;
             try {
                  serviceAccount = JSON.parse(serviceAccountString) as ServiceAccount;
+                 console.log("Service Account:", serviceAccount);
             } catch(e) {
                  throw new Error("The FIREBASE_SERVICE_ACCOUNT environment variable is not a valid JSON string. Please check the value in your project settings.");
             }
