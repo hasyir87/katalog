@@ -7,7 +7,6 @@ import type { Perfume } from '@/lib/types';
 import { z } from 'zod';
 
 // Skema Zod yang disempurnakan sebagai satu-satunya sumber kebenaran.
-// Menggunakan transform untuk secara otomatis mengonversi input.
 const perfumeSchema = z.object({
   namaParfum: z.string().min(2, 'Nama harus memiliki setidaknya 2 karakter.'),
   deskripsiParfum: z.string().min(10, 'Deskripsi harus memiliki setidaknya 10 karakter.'),
@@ -15,12 +14,7 @@ const perfumeSchema = z.object({
   middleNotes: z.string().min(2, 'Middle notes diperlukan.'),
   baseNotes: z.string().min(2, 'Base notes diperlukan.'),
   penggunaan: z.string().min(2, 'Konteks penggunaan diperlukan.'),
-  sex: z.string().transform(val => {
-    const lowerVal = val.toLowerCase();
-    if (lowerVal === 'pria') return 'Male';
-    if (lowerVal === 'wanita') return 'Female';
-    return 'Unisex';
-  }).pipe(z.enum(['Male', 'Female', 'Unisex'])),
+  sex: z.enum(['Male', 'Female', 'Unisex']),
   lokasi: z.string().min(2, 'Lokasi/kesempatan diperlukan.'),
   jenisAroma: z.string().min(2, 'Jenis aroma diperlukan.'),
   kualitas: z.enum(['Premium', 'Extrait']),
@@ -98,6 +92,16 @@ export async function addPerfumesBatch(data: any[]) {
     const batch = db.batch();
     const errors: string[] = [];
     let successCount = 0;
+    
+    // Define a schema for import that handles translation
+    const importSchema = perfumeSchema.extend({
+        sex: z.string().transform(val => {
+            const lowerVal = val.toLowerCase();
+            if (lowerVal === 'pria') return 'Male';
+            if (lowerVal === 'wanita') return 'Female';
+            return 'Unisex';
+        }).pipe(z.enum(['Male', 'Female', 'Unisex']))
+    });
 
     const countSnapshot = await perfumesCollection.count().get();
     let nextNumber = countSnapshot.data().count;
@@ -120,7 +124,7 @@ export async function addPerfumesBatch(data: any[]) {
                 kualitas: row['Kualitas'] || 'Premium',
             };
             
-            const validatedData = perfumeSchema.parse(mappedData);
+            const validatedData = importSchema.parse(mappedData);
 
             nextNumber++;
             const docRef = perfumesCollection.doc();
