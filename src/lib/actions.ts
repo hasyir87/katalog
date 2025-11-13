@@ -15,12 +15,16 @@ const perfumeSchema = z.object({
   middleNotes: z.string().min(2, 'Middle notes diperlukan.'),
   baseNotes: z.string().min(2, 'Base notes diperlukan.'),
   penggunaan: z.string().min(2, 'Konteks penggunaan diperlukan.'),
-  sex: z.string(), // Divalidasi oleh Select, di sini hanya memastikan itu string
+  sex: z.string().transform(val => {
+    const lowerVal = val.toLowerCase();
+    if (lowerVal === 'pria') return 'Male';
+    if (lowerVal === 'wanita') return 'Female';
+    return 'Unisex';
+  }).pipe(z.enum(['Male', 'Female', 'Unisex'])),
   lokasi: z.string().min(2, 'Lokasi/kesempatan diperlukan.'),
   jenisAroma: z.string().min(2, 'Jenis aroma diperlukan.'),
-  kualitas: z.string(), // Divalidasi oleh Select, di sini hanya memastikan itu string
+  kualitas: z.enum(['Premium', 'Extrait']),
 });
-
 
 export async function getPerfumes(): Promise<Perfume[]> {
   const db = await getDb();
@@ -41,8 +45,8 @@ export async function getPerfumeById(id: string): Promise<Perfume | null> {
     return { id: doc.id, ...doc.data() } as Perfume;
 }
 
+
 export async function addPerfume(data: z.infer<typeof perfumeSchema>) {
-    // Validasi data di sisi server sebagai lapisan keamanan.
     const validatedData = perfumeSchema.parse(data);
 
     const db = await getDb();
@@ -96,11 +100,11 @@ export async function addPerfumesBatch(data: any[]) {
     let successCount = 0;
 
     const countSnapshot = await perfumesCollection.count().get();
-    let nextNumber = countSnapshot.data().count; // Mulai dari hitungan saat ini
+    let nextNumber = countSnapshot.data().count;
 
     for (let i = 0; i < data.length; i++) {
         const row = data[i];
-        const rowNum = i + 2; // Asumsi baris data Excel dimulai dari baris 2
+        const rowNum = i + 2;
 
         try {
             const mappedData = {
@@ -115,12 +119,11 @@ export async function addPerfumesBatch(data: any[]) {
                 jenisAroma: row['Jenis Aroma'] || '',
                 kualitas: row['Kualitas'] || 'Premium',
             };
-
-            // Gunakan skema yang sama dengan form untuk validasi
+            
             const validatedData = perfumeSchema.parse(mappedData);
 
-            nextNumber++; // Increment nomor untuk dokumen baru
-            const docRef = perfumesCollection.doc(); // Auto-generate ID
+            nextNumber++;
+            const docRef = perfumesCollection.doc();
             batch.set(docRef, {
                 ...validatedData,
                 number: nextNumber,

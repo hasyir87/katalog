@@ -17,8 +17,13 @@ export async function getDb(): Promise<Firestore> {
             if (!serviceAccountString) {
                 throw new Error("The FIREBASE_SERVICE_ACCOUNT environment variable is not set. Please add it to your project settings.");
             }
-
-            const serviceAccount = JSON.parse(serviceAccountString) as ServiceAccount;
+            
+            let serviceAccount: ServiceAccount;
+            try {
+                 serviceAccount = JSON.parse(serviceAccountString) as ServiceAccount;
+            } catch(e) {
+                 throw new Error("The FIREBASE_SERVICE_ACCOUNT environment variable is not a valid JSON string.");
+            }
 
             initializeApp({
                 credential: cert(serviceAccount)
