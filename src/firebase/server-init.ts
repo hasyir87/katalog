@@ -1,7 +1,7 @@
 
 'use server';
 
-import { initializeApp, getApps, getApp, cert, App, ServiceAccount } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp, cert, ServiceAccount } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 
 /**
@@ -20,18 +20,15 @@ export async function getDb(): Promise<Firestore> {
 
             const serviceAccount = JSON.parse(serviceAccountString) as ServiceAccount;
 
-            if (!serviceAccount.project_id) {
-                 throw new Error("Service account object must contain a 'project_id' property. Check if the service account JSON is correct.");
-            }
-
             initializeApp({
                 credential: cert(serviceAccount)
             });
             
         } catch (error: any) {
             console.error("CRITICAL: Failed to initialize Firebase Admin SDK.", error);
-            // Re-throw a more user-friendly error to avoid leaking implementation details.
-            throw new Error(`Firebase Admin SDK initialization failed. Please check server logs and FIREBASE_SERVICE_ACCOUNT environment variable. Reason: ${error.message}`);
+            // Re-throw a more user-friendly error to avoid leaking implementation details,
+            // but include the original reason for easier debugging.
+            throw new Error(`Firebase Admin SDK initialization failed. Please check server logs and the FIREBASE_SERVICE_ACCOUNT environment variable. Reason: ${error.message}`);
         }
     }
     
