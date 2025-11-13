@@ -14,10 +14,10 @@ const perfumeSchema = z.object({
   middleNotes: z.string().min(2, 'Middle notes are required.'),
   baseNotes: z.string().min(2, 'Base notes are required.'),
   penggunaan: z.string().min(2, 'Usage context is required.'),
-  sex: z.enum(['Male', 'Female', 'Unisex']),
+  sex: z.string().min(2, 'Sex is required.'), // Simplified to string
   lokasi: z.string().min(2, 'Location/Occasion is required.'),
   jenisAroma: z.string().min(2, 'Scent type is required.'),
-  kualitas: z.enum(['Premium', 'Extrait']),
+  kualitas: z.string().min(2, 'Quality is required.'), // Simplified to string
 });
 
 export async function getPerfumes(): Promise<Perfume[]> {
