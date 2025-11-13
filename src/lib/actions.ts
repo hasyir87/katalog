@@ -66,29 +66,28 @@ export async function addPerfume(data: z.infer<typeof perfumeSchema>) {
     try {
         const db = await getDb();
         
-        // 1. Validate the data from the form
-        const validatedData = perfumeSchema.parse(data);
-
-        // 2. Get the current count for auto-numbering
+        // Data from the form is already validated by zodResolver on the client.
+        // We calculate the next number for the new perfume.
         const countSnapshot = await db.collection('perfumes').count().get();
         const nextNumber = countSnapshot.data().count + 1;
         
-        // 3. Create the final object to be saved
+        // Create the final object to be saved, combining form data with the new number.
         const finalData = {
-            ...validatedData,
+            ...data,
             number: nextNumber,
         };
         
-        // 4. Add to Firestore
+        // Add the clean, final data to Firestore.
         await db.collection('perfumes').add(finalData);
         
-        // 5. Revalidate paths
+        // Revalidate paths to update the UI.
         revalidatePath('/');
         revalidatePath('/dashboard');
         
         return { success: true };
     } catch (error: any) {
         console.error("Error adding perfume: ", error);
+        // We still keep ZodError check in case of direct server action calls without client validation
         if (error instanceof z.ZodError) {
             throw new Error(`Validation failed: ${error.errors.map(e => e.message).join(', ')}`);
         }
