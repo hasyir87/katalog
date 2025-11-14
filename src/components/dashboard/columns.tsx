@@ -5,7 +5,7 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { Button } from '@/components/ui/button';
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { Pencil, Trash } from 'lucide-react';
 import Link from 'next/link';
 import { deletePerfume } from '@/lib/actions';
 import { toast } from 'sonner';
@@ -80,7 +80,7 @@ export const columns: ColumnDef<Perfume>[] = [
           {/* Tombol Edit */}
           <Button asChild variant="outline" size="icon">
             <Link href={`/dashboard/edit/${perfume.id}`}>
-              <PencilIcon className="h-4 w-4" />
+              <Pencil className="h-4 w-4" />
               <span className="sr-only">Edit</span>
             </Link>
           </Button>
@@ -91,7 +91,7 @@ export const columns: ColumnDef<Perfume>[] = [
             size="icon"
             onClick={() => handleDelete(perfume.id, perfume.namaParfum)}
           >
-            <TrashIcon className="h-4 w-4" />
+            <Trash className="h-4 w-4" />
             <span className="sr-only">Hapus</span>
           </Button>
         </div>
