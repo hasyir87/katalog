@@ -12,7 +12,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import QRCode from 'react-qr-code';
-import { QrCodeIcon } from '@heroicons/react/24/outline';
+import { QrCode } from 'lucide-react';
 
 export function QrCodeModal({ perfumeId, perfumeName }: { perfumeId: string; perfumeName: string }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,7 +29,7 @@ export function QrCodeModal({ perfumeId, perfumeName }: { perfumeId: string; per
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="icon" title="Show QR Code">
-          <QrCodeIcon className="h-4 w-4" />
+          <QrCode className="h-4 w-4" />
           <span className="sr-only">Tampilkan Kode QR</span>
         </Button>
       </DialogTrigger>
