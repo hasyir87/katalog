@@ -61,7 +61,7 @@ export function PerfumeDetailsClient({ perfume }: PerfumeDetailsClientProps) {
       </div>
        <div className="flex flex-col items-center gap-6 sticky top-24">
         <Card className="w-full max-w-sm">
-           <CardHeader>
+           <CardHeader className="text-center">
               <CardTitle className="text-lg font-headline">Scent QR Code</CardTitle>
            </CardHeader>
            <CardContent className="flex flex-col items-center gap-4">
