@@ -10,23 +10,23 @@ import { getFirestore, Firestore } from 'firebase-admin/firestore';
  * to ensure the app is only initialized once per instance.
  */
 export async function getDb(): Promise<Firestore> {
-    // Cek jika aplikasi belum diinisialisasi
+    // Check if the app has not been initialized yet
     if (getApps().length === 0) {
         try {
-            // Panggil initializeApp tanpa argumen.
-            // Di lingkungan Google Cloud (Cloud Functions, App Engine, Cloud Run, dll.),
-            // SDK akan secara otomatis mendeteksi kredensial layanan.
+            // Call initializeApp without arguments.
+            // In Google Cloud environments (Cloud Functions, App Engine, Cloud Run, etc.),
+            // the SDK will automatically detect the service credentials.
             console.log("Initializing Firebase Admin SDK with Application Default Credentials...");
             initializeApp();
             console.log("Firebase Admin SDK initialized successfully.");
             
         } catch (error: any) {
             console.error("CRITICAL: Failed to initialize Firebase Admin SDK.", error);
-            // Lemparkan error yang lebih deskriptif
+            // Throw a more descriptive error to help diagnose auth issues.
             throw new Error(`Firebase Admin SDK initialization failed. This might be due to missing or expired authentication credentials. Please try re-authenticating. Reason: ${error.message}`);
         }
     }
     
-    // Kembalikan instance Firestore yang sudah ada
+    // Return the existing Firestore instance
     return getFirestore(getApp());
 }
