@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Pencil, Trash } from 'lucide-react';
 import Link from 'next/link';
 import { deletePerfume } from '@/lib/actions';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { QrCodeModal } from './qr-code-modal';
 
 // Fungsi untuk menangani penghapusan parfum
