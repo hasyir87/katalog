@@ -2,7 +2,6 @@
 'use server';
 
 import { getDb } from "@/firebase/server-init";
-import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, writeBatch } from "firebase-admin/firestore";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { Perfume } from "./types";
@@ -24,40 +23,42 @@ const perfumeSchema = z.object({
 export async function getAllPerfumes(searchQuery: string = ''): Promise<Perfume[]> {
     try {
         const db = await getDb();
-        const perfumesRef = collection(db, 'perfumes');
-        let q;
+        const perfumesRef = db.collection('perfumes');
+        let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = perfumesRef;
 
         if (searchQuery) {
+            // Admin SDK uses method chaining for queries
             const endQuery = searchQuery + '\uf8ff';
-            q = query(perfumesRef, 
-                where('namaParfum', '>=', searchQuery),
-                where('namaParfum', '<=', endQuery)
-            );
-        } else {
-            q = query(perfumesRef);
+            query = perfumesRef
+                .where('namaParfum', '>=', searchQuery)
+                .where('namaParfum', '<=', endQuery);
         }
 
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await query.get();
         const perfumes = querySnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
         })) as Perfume[];
         
+        // Sorting happens client-side now, so this is fine
         return perfumes;
+
     } catch (error) {
         console.error("Error getting all perfumes: ", error);
         throw new Error("Could not fetch perfumes.");
     }
 }
 
+
 // Fungsi untuk mendapatkan satu parfum berdasarkan ID
 export async function getPerfumeById(id: string): Promise<Perfume | null> {
     try {
         const db = await getDb();
-        const docRef = doc(db, 'perfumes', id);
-        const docSnap = await getDoc(docRef);
+        // Correct Admin SDK syntax for doc reference
+        const docRef = db.collection('perfumes').doc(id);
+        const docSnap = await docRef.get();
 
-        if (docSnap.exists()) {
+        if (docSnap.exists) {
             return { id: docSnap.id, ...docSnap.data() } as Perfume;
         }
         return null;
@@ -77,7 +78,8 @@ export async function addPerfume(data: unknown) {
     }
 
     try {
-        await addDoc(collection(db, 'perfumes'), validation.data);
+        // Correct Admin SDK syntax
+        await db.collection('perfumes').add(validation.data);
         revalidatePath("/dashboard");
         return { success: true };
     } catch (error) {
@@ -96,8 +98,9 @@ export async function updatePerfume(id: string, data: unknown) {
     }
 
     try {
-        const docRef = doc(db, 'perfumes', id);
-        await updateDoc(docRef, validation.data);
+        // Correct Admin SDK syntax
+        const docRef = db.collection('perfumes').doc(id);
+        await docRef.update(validation.data);
         revalidatePath("/dashboard");
         revalidatePath(`/dashboard/edit/${id}`);
         revalidatePath(`/perfume/${id}`);
@@ -112,7 +115,8 @@ export async function updatePerfume(id: string, data: unknown) {
 export async function deletePerfume(id: string) {
     const db = await getDb();
     try {
-        await deleteDoc(doc(db, 'perfumes', id));
+        // Correct Admin SDK syntax
+        await db.collection('perfumes').doc(id).delete();
         revalidatePath("/dashboard");
     } catch (error) {
         console.error(`Error deleting perfume (${id}): `, error);
@@ -124,9 +128,9 @@ export async function deletePerfume(id: string) {
 export async function deleteManyPerfumes(ids: string[]) {
     const db = await getDb();
     try {
-        const batch = writeBatch(db);
+        const batch = db.batch();
         ids.forEach(id => {
-            const docRef = doc(db, 'perfumes', id);
+            const docRef = db.collection('perfumes').doc(id);
             batch.delete(docRef);
         });
         await batch.commit();
@@ -140,7 +144,7 @@ export async function deleteManyPerfumes(ids: string[]) {
 // Fungsi untuk menambah parfum secara batch dari Excel
 export async function addPerfumesBatch(data: any[]) {
     const db = await getDb();
-    const batch = writeBatch(db);
+    const batch = db.batch();
     const errors: string[] = [];
     let successCount = 0;
 
@@ -162,7 +166,8 @@ export async function addPerfumesBatch(data: any[]) {
         const validation = perfumeSchema.safeParse(cleanedItem);
 
         if (validation.success) {
-            const docRef = doc(collection(db, 'perfumes')); // Membuat doc ref baru
+            // Correct Admin SDK syntax
+            const docRef = db.collection('perfumes').doc(); // Membuat doc ref baru
             batch.set(docRef, validation.data);
             successCount++;
         } else {
