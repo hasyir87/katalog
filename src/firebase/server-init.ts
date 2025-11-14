@@ -17,6 +17,7 @@ export async function getDb(): Promise<Firestore> {
             if (!serviceAccountString) {
                 throw new Error("The FIREBASE_SERVICE_ACCOUNT environment variable is not set. Please add it to your project settings.");
             }
+            console.log("Service Account String:", serviceAccountString);
             
             let serviceAccount: ServiceAccount;
             try {
