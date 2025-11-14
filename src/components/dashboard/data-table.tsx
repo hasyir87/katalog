@@ -43,7 +43,9 @@ export function DataTable<TData extends Perfume, TValue>({
   rowSelection,
   setRowSelection,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [sorting, setSorting] = React.useState<SortingState>([
+    { id: 'namaParfum', desc: false },
+  ]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
