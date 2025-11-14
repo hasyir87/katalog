@@ -1,7 +1,7 @@
 
 'use server';
 
-import { initializeApp, getApps, getApp, cert, ServiceAccount } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp, cert } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 
 /**
@@ -10,38 +10,23 @@ import { getFirestore, Firestore } from 'firebase-admin/firestore';
  * to ensure the app is only initialized once per instance.
  */
 export async function getDb(): Promise<Firestore> {
+    // Cek jika aplikasi belum diinisialisasi
     if (getApps().length === 0) {
         try {
-            const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
-            
-            if (!serviceAccountString) {
-                throw new Error("The FIREBASE_SERVICE_ACCOUNT environment variable is not set. Please add it to your project settings.");
-            }
-            console.log("Service Account String:", serviceAccountString);
-            
-            let serviceAccount: ServiceAccount;
-            try {
-                 serviceAccount = JSON.parse(serviceAccountString) as ServiceAccount;
-                 console.log("Service Account:", serviceAccount);
-            } catch(e) {
-                 throw new Error("The FIREBASE_SERVICE_ACCOUNT environment variable is not a valid JSON string. Please check the value in your project settings.");
-            }
-
-            initializeApp({
-                credential: cert(serviceAccount)
-            });
+            // Panggil initializeApp tanpa argumen.
+            // Di lingkungan Google Cloud (Cloud Functions, App Engine, Cloud Run, dll.),
+            // SDK akan secara otomatis mendeteksi kredensial layanan.
+            console.log("Initializing Firebase Admin SDK with Application Default Credentials...");
+            initializeApp();
+            console.log("Firebase Admin SDK initialized successfully.");
             
         } catch (error: any) {
             console.error("CRITICAL: Failed to initialize Firebase Admin SDK.", error);
-            // Re-throw a more user-friendly error to avoid leaking implementation details,
-            // but include the original reason for easier debugging.
-            throw new Error(`Firebase Admin SDK initialization failed. Please check server logs and the FIREBASE_SERVICE_ACCOUNT environment variable. Reason: ${error.message}`);
+            // Lemparkan error yang lebih deskriptif
+            throw new Error(`Firebase Admin SDK initialization failed. Reason: ${error.message}`);
         }
     }
     
-    // Always get the app and firestore instance after ensuring initialization.
-    // This is safer in serverless environments than relying on a global variable.
-    const adminApp = getApp();
-    const db = getFirestore(adminApp);
-    return db;
+    // Kembalikan instance Firestore yang sudah ada
+    return getFirestore(getApp());
 }

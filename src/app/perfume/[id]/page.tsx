@@ -1,49 +1,61 @@
-'use client';
 
+import { getPerfumeById } from '@/lib/actions';
 import { notFound } from 'next/navigation';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import type { Perfume } from '@/lib/types';
-import { PerfumeDetailsClient } from './perfume-details-client';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2 } from 'lucide-react';
-import { use } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
+// Komponen untuk menampilkan setiap detail parfum dengan label
+function PerfumeDetail({ label, value }: { label: string; value: string | undefined }) {
+    if (!value) return null;
+    return (
+        <div className="grid grid-cols-2 gap-4">
+            <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
+            <dd className="text-sm">{value}</dd>
+        </div>
+    );
+}
 
-export default function PerfumeDetailPage({ params }: { params: Promise<{ id: string }> }) {
-    const firestore = useFirestore();
-    const resolvedParams = use(params);
+// Halaman Detail Parfum
+export default async function PerfumeDetailPage({ params }: { params: { id: string } }) {
+    const perfume = await getPerfumeById(params.id);
 
-    const perfumeRef = useMemoFirebase(() => {
-        if (!firestore || !resolvedParams.id) return null;
-        return doc(firestore, 'perfumes', resolvedParams.id);
-    }, [firestore, resolvedParams.id]);
-
-    const { data: perfume, isLoading, error } = useDoc<Perfume>(perfumeRef);
-
-    if (isLoading) {
-        return (
-            <div className="container mx-auto max-w-4xl py-12 md:py-16">
-                 <div className="flex justify-center items-center h-64">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-            </div>
-        );
+    if (!perfume) {
+        notFound(); // Tampilkan halaman 404 jika parfum tidak ditemukan
     }
-    
-    if (!isLoading && !perfume) {
-        notFound();
-    }
-
-    if (error) {
-        // You might want to show a more user-friendly error message
-        return <div className="text-center py-10 text-destructive">Error loading perfume details.</div>;
-    }
-
 
     return (
-        <div className="container mx-auto max-w-4xl py-12 md:py-16">
-           {perfume && <PerfumeDetailsClient perfume={perfume} />}
+        <div className="container mx-auto px-4 py-8 md:px-6 lg:py-12">
+            <Card className="max-w-4xl mx-auto overflow-hidden shadow-lg rounded-lg">
+                <CardHeader className="bg-muted/30 p-6">
+                    <CardTitle className="text-3xl font-headline tracking-tight">{perfume.namaParfum}</CardTitle>
+                    <CardDescription className="text-lg text-muted-foreground mt-1">{perfume.deskripsiParfum}</CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                    <div className="space-y-4">
+                        <div className="flex flex-wrap gap-2">
+                            <Badge variant="secondary">{perfume.kualitas}</Badge>
+                            <Badge variant="secondary">{perfume.sex}</Badge>
+                            <Badge variant="secondary">{perfume.jenisAroma}</Badge>
+                        </div>
+
+                        <Separator />
+
+                        <dl className="space-y-4">
+                            <PerfumeDetail label="Top Notes" value={perfume.topNotes} />
+                            <PerfumeDetail label="Middle Notes" value={perfume.middleNotes} />
+                            <PerfumeDetail label="Base Notes" value={perfume.baseNotes} />
+                        </dl>
+
+                        <Separator />
+
+                        <dl className="space-y-4">
+                            <PerfumeDetail label="Saran Penggunaan" value={perfume.penggunaan} />
+                            <PerfumeDetail label="Lokasi / Acara" value={perfume.lokasi} />
+                        </dl>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

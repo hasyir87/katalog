@@ -1,23 +1,38 @@
 'use client';
 
-import type { ColumnDef } from '@tanstack/react-table';
 import type { Perfume } from '@/lib/types';
-import { ChevronRight, ArrowUpDown } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { type ColumnDef } from '@tanstack/react-table';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { Button } from '@/components/ui/button';
+import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import Link from 'next/link';
+import { deletePerfume } from '@/lib/actions';
+import { toast } from 'sonner';
+import { QrCodeModal } from './qr-code-modal';
+
+// Fungsi untuk menangani penghapusan parfum
+const handleDelete = async (id: string, name: string) => {
+  const confirmed = confirm(`Apakah Anda yakin ingin menghapus parfum "${name}"?`);
+  if (confirmed) {
+    try {
+      await deletePerfume(id);
+      toast.success(`Parfum "${name}" berhasil dihapus.`);
+    } catch (error) {
+      toast.error('Gagal menghapus parfum. Silakan coba lagi.');
+    }
+  }
+};
 
 export const columns: ColumnDef<Perfume>[] = [
   {
-    id: "select",
+    id: 'select',
     header: ({ table }) => (
       <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
+        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
+        className="translate-y-[2px]"
       />
     ),
     cell: ({ row }) => (
@@ -25,7 +40,7 @@ export const columns: ColumnDef<Perfume>[] = [
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
         aria-label="Select row"
-        onClick={(e) => e.stopPropagation()} // Prevent row click event when clicking checkbox
+        className="translate-y-[2px]"
       />
     ),
     enableSorting: false,
@@ -33,98 +48,52 @@ export const columns: ColumnDef<Perfume>[] = [
   },
   {
     accessorKey: 'number',
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          No.
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => <div className="font-medium">{row.getValue('number')}</div>
-  },
-  {
-    accessorKey: 'kualitas',
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Kualitas
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => <div className="capitalize line-clamp-1 max-w-[100px]">{row.getValue('kualitas')}</div>
-  },
-  {
-    accessorKey: 'sex',
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Sex
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-        const sex = row.getValue('sex');
-        const formattedSex = sex === 'Male' ? 'Pria' : sex === 'Female' ? 'Wanita' : 'Unisex';
-        return <div className="line-clamp-1 max-w-[80px]">{formattedSex}</div>;
-    }
+    header: ({ column }) => <DataTableColumnHeader column={column} title="No" />,
+    cell: ({ row }) => <div className="w-[30px]">{row.getValue('number')}</div>,
+    enableSorting: true,
   },
   {
     accessorKey: 'namaParfum',
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Nama Parfum
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => <div className="line-clamp-1 font-medium max-w-[200px]">{row.getValue('namaParfum')}</div>,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Nama Parfum" />,
+    cell: ({ row }) => <div>{row.getValue('namaParfum')}</div>,
+  },
+  {
+    accessorKey: 'kualitas',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Kualitas" />,
+    cell: ({ row }) => <div>{row.getValue('kualitas')}</div>,
   },
   {
     accessorKey: 'jenisAroma',
-    header: 'Jenis Aroma',
-    cell: ({ row }) => (
-        <div className="line-clamp-1 max-w-[120px]">
-            <Badge variant="outline">{row.original.jenisAroma}</Badge>
-        </div>
-    )
-  },
-  {
-    accessorKey: 'penggunaan',
-    header: 'Penggunaan',
-    cell: ({ row }) => <div className="line-clamp-1 max-w-[120px]">{row.getValue('penggunaan')}</div>
-  },
-  {
-    accessorKey: 'deskripsiParfum',
-    header: 'Deskripsi',
-    cell: ({ row }) => <div className="line-clamp-1 max-w-xs">{row.original.deskripsiParfum}</div>
-  },
-  {
-    accessorKey: 'lokasi',
-    header: 'Lokasi',
-    cell: ({ row }) => <div className="line-clamp-1 max-w-[120px]">{row.getValue('lokasi')}</div>
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Jenis Aroma" />,
+    cell: ({ row }) => <div>{row.getValue('jenisAroma')}</div>,
   },
   {
     id: 'actions',
-    cell: () => {
+    header: () => <div className="text-right">Actions</div>,
+    cell: ({ row }) => {
+      const perfume = row.original;
       return (
-        <div className="flex justify-end">
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center justify-end gap-2">
+          {/* Tombol QR Code */}
+          <QrCodeModal perfumeId={perfume.id} perfumeName={perfume.namaParfum} />
+
+          {/* Tombol Edit */}
+          <Button asChild variant="outline" size="icon">
+            <Link href={`/dashboard/edit/${perfume.id}`}>
+              <PencilIcon className="h-4 w-4" />
+              <span className="sr-only">Edit</span>
+            </Link>
+          </Button>
+
+          {/* Tombol Hapus */}
+          <Button
+            variant="destructive" // Menggunakan variant "destructive" untuk warna merah
+            size="icon"
+            onClick={() => handleDelete(perfume.id, perfume.namaParfum)}
+          >
+            <TrashIcon className="h-4 w-4" />
+            <span className="sr-only">Hapus</span>
+          </Button>
         </div>
       );
     },
