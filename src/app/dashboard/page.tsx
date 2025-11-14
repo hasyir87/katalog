@@ -12,8 +12,8 @@ export default async function DashboardPage({
     searchParams?: { [key: string]: string | string[] | undefined };
 }) {
 
-    const query = typeof searchParams?.q === 'string' ? searchParams.q : '';
-    const perfumes: Perfume[] = await getAllPerfumes(query);
+    const query = searchParams?.q ?? '';
+    const perfumes: Perfume[] = await getAllPerfumes(Array.isArray(query) ? query[0] : query);
 
     // Tambahkan nomor urut ke setiap objek parfum
     const numberedPerfumes = perfumes.map((p, index) => ({ ...p, number: index + 1 }));

@@ -24,24 +24,30 @@ export async function getAllPerfumes(searchQuery: string = ''): Promise<Perfume[
     try {
         const db = await getDb();
         const perfumesRef = db.collection('perfumes');
-        let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = perfumesRef;
+        
+        const querySnapshot = await perfumesRef.get();
 
-        if (searchQuery) {
-            // Admin SDK uses method chaining for queries
-            const endQuery = searchQuery + '\uf8ff';
-            query = perfumesRef
-                .where('namaParfum', '>=', searchQuery)
-                .where('namaParfum', '<=', endQuery);
-        }
-
-        const querySnapshot = await query.get();
-        const perfumes = querySnapshot.docs.map(doc => ({
+        const allPerfumes = querySnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
         })) as Perfume[];
+
+        if (!searchQuery) {
+            return allPerfumes;
+        }
+
+        const lowercasedQuery = searchQuery.toLowerCase();
         
-        // Sorting happens client-side now, so this is fine
-        return perfumes;
+        const filteredPerfumes = allPerfumes.filter(perfume => {
+            return (
+              perfume.namaParfum.toLowerCase().includes(lowercasedQuery) ||
+              perfume.jenisAroma.toLowerCase().includes(lowercasedQuery) ||
+              perfume.kualitas.toLowerCase().includes(lowercasedQuery) ||
+              perfume.sex.toLowerCase().includes(lowercasedQuery)
+            )
+        });
+
+        return filteredPerfumes;
 
     } catch (error) {
         console.error("Error getting all perfumes: ", error);
@@ -54,7 +60,6 @@ export async function getAllPerfumes(searchQuery: string = ''): Promise<Perfume[
 export async function getPerfumeById(id: string): Promise<Perfume | null> {
     try {
         const db = await getDb();
-        // Correct Admin SDK syntax for doc reference
         const docRef = db.collection('perfumes').doc(id);
         const docSnap = await docRef.get();
 
@@ -78,7 +83,6 @@ export async function addPerfume(data: unknown) {
     }
 
     try {
-        // Correct Admin SDK syntax
         await db.collection('perfumes').add(validation.data);
         revalidatePath("/dashboard");
         return { success: true };
@@ -98,7 +102,6 @@ export async function updatePerfume(id: string, data: unknown) {
     }
 
     try {
-        // Correct Admin SDK syntax
         const docRef = db.collection('perfumes').doc(id);
         await docRef.update(validation.data);
         revalidatePath("/dashboard");
@@ -115,7 +118,6 @@ export async function updatePerfume(id: string, data: unknown) {
 export async function deletePerfume(id: string) {
     const db = await getDb();
     try {
-        // Correct Admin SDK syntax
         await db.collection('perfumes').doc(id).delete();
         revalidatePath("/dashboard");
     } catch (error) {
@@ -166,7 +168,6 @@ export async function addPerfumesBatch(data: any[]) {
         const validation = perfumeSchema.safeParse(cleanedItem);
 
         if (validation.success) {
-            // Correct Admin SDK syntax
             const docRef = db.collection('perfumes').doc(); // Membuat doc ref baru
             batch.set(docRef, validation.data);
             successCount++;
@@ -188,4 +189,3 @@ export async function addPerfumesBatch(data: any[]) {
         };
     }
 }
-

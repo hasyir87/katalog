@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -42,7 +43,6 @@ export function DataTable<TData extends BaseData, TValue>({
     { id: 'namaParfum', desc: false } // Default sort
   ]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const table = useReactTable({
     data,
@@ -51,17 +51,14 @@ export function DataTable<TData extends BaseData, TValue>({
       sorting,
       columnVisibility,
       rowSelection,
-      columnFilters,
     },
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    manualFiltering: true, // Karena filter sekarang di server
     getRowId: (row) => row.id, // Memberi tahu tabel cara mendapatkan ID baris
   });
 
