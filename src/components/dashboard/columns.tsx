@@ -47,10 +47,10 @@ export const columns: ColumnDef<Perfume>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: 'number',
+    id: 'number',
     header: ({ column }) => <DataTableColumnHeader column={column} title="No" />,
-    cell: ({ row }) => <div className="w-[30px]">{row.getValue('number')}</div>,
-    enableSorting: true,
+    cell: ({ row }) => <div className="w-[30px]">{row.index + 1}</div>,
+    enableSorting: false, // Sorting by display index doesn't make sense
   },
   {
     accessorKey: 'namaParfum',
