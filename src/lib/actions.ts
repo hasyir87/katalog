@@ -41,6 +41,8 @@ export async function getPerfumeById(id: string): Promise<Perfume | null> {
 
 
 export async function addPerfume(data: z.infer<typeof perfumeSchema>) {
+  try {
+    console.log("addPerfume called with data:", data);
     const validatedData = perfumeSchema.parse(data);
 
     const db = await getDb();
@@ -59,6 +61,13 @@ export async function addPerfume(data: z.infer<typeof perfumeSchema>) {
 
     revalidatePath('/');
     revalidatePath('/dashboard');
+  } catch (error: any) {
+    console.error("Error in addPerfume:", error);
+    if (error instanceof z.ZodError) {
+      console.error("Zod validation error:", error.errors);
+    }
+    throw error; // Re-throw the error to propagate it to the client
+  }
 }
 
 export async function updatePerfume(id: string, data: z.infer<typeof perfumeSchema>) {
