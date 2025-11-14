@@ -34,10 +34,12 @@ export function PerfumeDetailsClient({ perfume }: PerfumeDetailsClientProps) {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Kembali
         </Button>
-        <Badge variant="secondary">{perfume.jenisAroma}</Badge>
-        <h1 className="text-4xl lg:text-5xl font-bold font-headline tracking-tight text-primary">
-          {perfume.namaParfum}
-        </h1>
+        <div className="space-y-2">
+            <h1 className="text-4xl lg:text-5xl font-bold font-headline tracking-tight text-primary">
+            {perfume.namaParfum}
+            </h1>
+            <Badge variant="secondary">{perfume.jenisAroma}</Badge>
+        </div>
         <p className="text-lg text-muted-foreground">
           {perfume.deskripsiParfum}
         </p>
@@ -71,3 +73,4 @@ export function PerfumeDetailsClient({ perfume }: PerfumeDetailsClientProps) {
     </div>
   );
 }
+

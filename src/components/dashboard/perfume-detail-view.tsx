@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Perfume } from "@/lib/types";
@@ -62,8 +63,8 @@ export function PerfumeDetailView({ perfume, onClose }: PerfumeDetailViewProps) 
         <Card className="h-full flex flex-col border-0 shadow-none rounded-none">
             <CardHeader className="flex flex-row items-start justify-between">
                 <div>
-                    <Badge variant="secondary" className="mb-2">{perfume.jenisAroma}</Badge>
-                    <CardTitle className="font-headline text-2xl">{perfume.namaParfum}</CardTitle>
+                    <CardTitle className="font-headline text-2xl mb-1">{perfume.namaParfum}</CardTitle>
+                    <Badge variant="secondary">{perfume.jenisAroma}</Badge>
                 </div>
                  <div className="flex gap-2">
                     <DeleteConfirmation perfumeId={perfume.id} perfumeName={perfume.namaParfum} onSuccess={onClose} />
