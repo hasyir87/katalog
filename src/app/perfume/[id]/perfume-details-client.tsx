@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Badge } from '@/components/ui/badge';
@@ -5,13 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { QrCodeDisplay } from '@/components/qr-code-display';
 import type { Perfume } from '@/lib/types';
-import { Droplets, Flower, Building, User, Clock, Sparkle, Milestone } from 'lucide-react';
+import { Droplets, Flower, Building, User, Clock, Sparkle, Milestone, ArrowLeft } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
 interface PerfumeDetailsClientProps {
     perfume: Perfume;
 }
 
 export function PerfumeDetailsClient({ perfume }: PerfumeDetailsClientProps) {
+  const router = useRouter();
 
   const details = [
     { icon: Droplets, label: "Top Notes", value: perfume.topNotes },
@@ -26,6 +30,10 @@ export function PerfumeDetailsClient({ perfume }: PerfumeDetailsClientProps) {
   return (
     <div className="grid md:grid-cols-[1fr_250px] gap-8 lg:gap-12 items-start">
       <div className="space-y-6">
+        <Button variant="outline" onClick={() => router.back()} className="mb-4">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Kembali
+        </Button>
         <Badge variant="secondary">{perfume.jenisAroma}</Badge>
         <h1 className="text-4xl lg:text-5xl font-bold font-headline tracking-tight text-primary">
           {perfume.namaParfum}
