@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Pencil, Trash } from 'lucide-react';
 import Link from 'next/link';
 import { deletePerfume } from '@/lib/actions';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { QrCodeModal } from './qr-code-modal';
 
 // Fungsi untuk menangani penghapusan parfum
@@ -17,9 +17,9 @@ const handleDelete = async (id: string, name: string) => {
   if (confirmed) {
     try {
       await deletePerfume(id);
-      toast.success(`Parfum "${name}" berhasil dihapus.`);
+      toast({ title: `Parfum "${name}" berhasil dihapus.` });
     } catch (error) {
-      toast.error('Gagal menghapus parfum. Silakan coba lagi.');
+      toast({ variant: 'destructive', title: 'Gagal menghapus parfum. Silakan coba lagi.' });
     }
   }
 };
