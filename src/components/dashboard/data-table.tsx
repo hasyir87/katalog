@@ -11,6 +11,7 @@ import {
   type SortingState,
   type ColumnFiltersState,
   type RowSelectionState,
+  type GlobalFilterTableState,
 } from '@tanstack/react-table';
 
 import {
@@ -46,9 +47,7 @@ export function DataTable<TData extends Perfume, TValue>({
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: 'namaParfum', desc: false },
   ]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
+  const [globalFilter, setGlobalFilter] = React.useState('');
 
   const table = useReactTable({
     data,
@@ -56,13 +55,13 @@ export function DataTable<TData extends Perfume, TValue>({
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
     getFilteredRowModel: getFilteredRowModel(),
     onRowSelectionChange: setRowSelection,
     getRowId: (row) => row.id, // Important for selection state to work correctly
     state: {
       sorting,
-      columnFilters,
+      globalFilter,
       rowSelection,
     },
   });
@@ -71,10 +70,10 @@ export function DataTable<TData extends Perfume, TValue>({
     <div className="h-full flex flex-col">
         <div className="flex items-center py-4">
             <Input
-            placeholder="Filter by name..."
-            value={(table.getColumn("namaParfum")?.getFilterValue() as string) ?? ""}
+            placeholder="Search all columns..."
+            value={globalFilter ?? ''}
             onChange={(event) =>
-                table.getColumn("namaParfum")?.setFilterValue(event.target.value)
+                setGlobalFilter(event.target.value)
             }
             className="max-w-sm"
             />
