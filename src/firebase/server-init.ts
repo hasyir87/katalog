@@ -23,7 +23,7 @@ export async function getDb(): Promise<Firestore> {
         } catch (error: any) {
             console.error("CRITICAL: Failed to initialize Firebase Admin SDK.", error);
             // Lemparkan error yang lebih deskriptif
-            throw new Error(`Firebase Admin SDK initialization failed. Reason: ${error.message}`);
+            throw new Error(`Firebase Admin SDK initialization failed. This might be due to missing or expired authentication credentials. Please try re-authenticating. Reason: ${error.message}`);
         }
     }
     
