@@ -19,43 +19,6 @@ const perfumeSchema = z.object({
     lokasi: z.string().optional(),
 });
 
-// Fungsi untuk mendapatkan semua parfum dengan opsi pencarian
-export async function getAllPerfumes(searchQuery: string = ''): Promise<Perfume[]> {
-    try {
-        const db = await getDb();
-        const perfumesRef = db.collection('perfumes');
-        
-        const querySnapshot = await perfumesRef.get();
-
-        const allPerfumes = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-        })) as Perfume[];
-
-        if (!searchQuery) {
-            return allPerfumes;
-        }
-
-        const lowercasedQuery = searchQuery.toLowerCase();
-        
-        const filteredPerfumes = allPerfumes.filter(perfume => {
-            return (
-              perfume.namaParfum.toLowerCase().includes(lowercasedQuery) ||
-              perfume.jenisAroma.toLowerCase().includes(lowercasedQuery) ||
-              perfume.kualitas.toLowerCase().includes(lowercasedQuery) ||
-              perfume.sex.toLowerCase().includes(lowercasedQuery)
-            )
-        });
-
-        return filteredPerfumes;
-
-    } catch (error) {
-        console.error("Error getting all perfumes: ", error);
-        throw new Error("Could not fetch perfumes.");
-    }
-}
-
-
 // Fungsi untuk mendapatkan satu parfum berdasarkan ID
 export async function getPerfumeById(id: string): Promise<Perfume | null> {
     try {
@@ -164,6 +127,15 @@ export async function addPerfumesBatch(data: any[]) {
             penggunaan: item['penggunaan'] || item['Penggunaan'] || '',
             lokasi: item['lokasi'] || item['Lokasi'] || '',
         }
+
+        // Handle 'Sex' field mapping from Indonesian to English
+        const sexValue = (cleanedItem.sex || '').toLowerCase();
+        if (sexValue === 'pria') {
+            cleanedItem.sex = 'Male';
+        } else if (sexValue === 'wanita') {
+            cleanedItem.sex = 'Female';
+        }
+
 
         const validation = perfumeSchema.safeParse(cleanedItem);
 

@@ -1,23 +1,39 @@
+'use client';
 
-import { getAllPerfumes } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PlusCircle } from "lucide-react";
 import { DashboardClient } from "./_components/dashboard-client";
+import { useCollection, useMemoFirebase, useFirestore } from "@/firebase";
+import { collection, query, orderBy } from "firebase/firestore";
 import type { Perfume } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useSearchParams } from "next/navigation";
 
-export default async function DashboardPage({ 
-    searchParams
-}: {
-    searchParams?: { [key: string]: string | string[] | undefined };
-}) {
+function DashboardContent() {
+    const firestore = useFirestore();
+    const searchParams = useSearchParams();
+    const searchQuery = searchParams.get('q') || '';
 
-    const query = searchParams?.q ?? '';
-    const perfumes: Perfume[] = await getAllPerfumes(Array.isArray(query) ? query[0] : query);
+    const perfumesQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'perfumes'), orderBy('namaParfum', 'asc'));
+    }, [firestore]);
+
+    const { data: perfumes, isLoading } = useCollection<Perfume>(perfumesQuery);
+
+    if (isLoading) {
+        return <Skeleton className="h-[60vh] w-full" />;
+    }
 
     // Tambahkan nomor urut ke setiap objek parfum
-    const numberedPerfumes = perfumes.map((p, index) => ({ ...p, number: index + 1 }));
+    const numberedPerfumes = (perfumes || []).map((p, index) => ({ ...p, number: index + 1 }));
 
+    return <DashboardClient data={numberedPerfumes} initialSearchQuery={searchQuery} />;
+}
+
+
+export default function DashboardPage() {
     return (
         <div className="h-[calc(100vh-5rem)] flex flex-col">
             <div className="flex-shrink-0 border-b">
@@ -37,7 +53,7 @@ export default async function DashboardPage({
                 </div>
             </div>
             <div className="flex-grow container mx-auto py-6 overflow-hidden">
-                <DashboardClient data={numberedPerfumes} />
+                <DashboardContent />
             </div>
         </div>
     );

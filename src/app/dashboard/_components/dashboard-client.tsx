@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
@@ -20,14 +20,29 @@ import { deleteManyPerfumes } from "@/lib/actions";
 
 interface DashboardClientProps {
   data: Perfume[];
+  initialSearchQuery: string;
 }
 
-export function DashboardClient({ data }: DashboardClientProps) {
+export function DashboardClient({ data, initialSearchQuery }: DashboardClientProps) {
     const router = useRouter();
     const { toast } = useToast();
     const [selectedPerfume, setSelectedPerfume] = useState<Perfume | null>(null);
     const [rowSelection, setRowSelection] = useState({});
+    const [globalFilter, setGlobalFilter] = useState(initialSearchQuery);
     const isMobile = useIsMobile();
+
+    const filteredData = useMemo(() => {
+        if (!globalFilter) return data;
+        const lowercasedFilter = globalFilter.toLowerCase();
+        return data.filter(perfume => {
+            return (
+                perfume.namaParfum.toLowerCase().includes(lowercasedFilter) ||
+                (perfume.jenisAroma && perfume.jenisAroma.toLowerCase().includes(lowercasedFilter)) ||
+                (perfume.kualitas && perfume.kualitas.toLowerCase().includes(lowercasedFilter)) ||
+                (perfume.sex && perfume.sex.toLowerCase().includes(lowercasedFilter))
+            );
+        });
+    }, [data, globalFilter]);
 
     const handleRowClick = (perfume: Perfume) => {
         setSelectedPerfume(prev => (prev && prev.id === perfume.id ? null : perfume));
@@ -52,8 +67,7 @@ export function DashboardClient({ data }: DashboardClientProps) {
             });
             setRowSelection({});
             setSelectedPerfume(null);
-            router.refresh(); // Memuat ulang data dari server
-
+            // Data will refresh automatically due to useCollection hook
         } catch (e: any) {
             toast({
                 variant: "destructive",
@@ -73,11 +87,13 @@ export function DashboardClient({ data }: DashboardClientProps) {
     const dataTable = (
         <DataTable 
             columns={columns} 
-            data={data}
+            data={filteredData}
             onRowClick={handleRowClick}
             selectedPerfumeId={selectedPerfume?.id}
             rowSelection={rowSelection}
             setRowSelection={setRowSelection}
+            globalFilter={globalFilter}
+            setGlobalFilter={setGlobalFilter}
         />
     );
 
@@ -137,7 +153,7 @@ export function DashboardClient({ data }: DashboardClientProps) {
                                    </div>
                                 </SheetContent>
                             </Sheet>
-                            <ExcelImporter onUploadSuccess={() => router.refresh()}/>
+                            <ExcelImporter onUploadSuccess={() => { /* No router.refresh needed */ }}/>
                             <ExcelExporter data={data} />
                         </>
                      )}

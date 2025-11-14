@@ -2,17 +2,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
-import type { ColumnDef, SortingState, VisibilityState, RowSelectionState, OnChangeFn, ColumnFiltersState } from '@tanstack/react-table';
-import { useDebouncedCallback } from 'use-debounce';
+import type { ColumnDef, SortingState, VisibilityState, RowSelectionState, OnChangeFn } from '@tanstack/react-table';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DataTablePagination } from '@/components/ui/data-table/data-table-pagination';
 import { DataTableViewOptions } from '@/components/ui/data-table/data-table-view-options';
 import { Input } from "@/components/ui/input"
 
-// Menambahkan batasan generik untuk memastikan data memiliki properti `id`
 interface BaseData {
     id: string;
 }
@@ -23,8 +20,9 @@ interface DataTableProps<TData extends BaseData, TValue> {
   onRowClick: (data: TData) => void;
   selectedPerfumeId?: string | null;
   rowSelection: RowSelectionState;
-  // Menggunakan tipe yang benar dari @tanstack/react-table
-  setRowSelection: OnChangeFn<RowSelectionState>; 
+  setRowSelection: OnChangeFn<RowSelectionState>;
+  globalFilter: string;
+  setGlobalFilter: (value: string) => void;
 }
 
 export function DataTable<TData extends BaseData, TValue>({
@@ -33,12 +31,10 @@ export function DataTable<TData extends BaseData, TValue>({
   onRowClick,
   selectedPerfumeId,
   rowSelection,
-  setRowSelection
+  setRowSelection,
+  globalFilter,
+  setGlobalFilter
 }: DataTableProps<TData, TValue>) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
   const [sorting, setSorting] = useState<SortingState>([
     { id: 'namaParfum', desc: false } // Default sort
   ]);
@@ -51,34 +47,26 @@ export function DataTable<TData extends BaseData, TValue>({
       sorting,
       columnVisibility,
       rowSelection,
+      globalFilter,
     },
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getRowId: (row) => row.id, // Memberi tahu tabel cara mendapatkan ID baris
+    getRowId: (row) => row.id,
   });
-
-  const handleSearch = useDebouncedCallback((term: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (term) {
-      params.set('q', term);
-    } else {
-      params.delete('q');
-    }
-    router.replace(`${pathname}?${params.toString()}`);
-  }, 300);
 
   return (
     <div className="space-y-4 h-full flex flex-col">
         <div className="flex items-center justify-between flex-shrink-0">
             <Input
               placeholder="Cari parfum..."
-              defaultValue={searchParams.get('q') || ''}
-              onChange={(e) => handleSearch(e.target.value)}
+              value={globalFilter ?? ''}
+              onChange={(e) => setGlobalFilter(e.target.value)}
               className="max-w-sm"
             />
            <DataTableViewOptions table={table} />

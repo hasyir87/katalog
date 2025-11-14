@@ -148,7 +148,7 @@ export function ExcelImporter({ onUploadSuccess }: ExcelImporterProps) {
         if (!isOpen) resetState();
     }}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm"> {/* Menambahkan size=sm */}
+        <Button variant="outline">
           <UploadCloud className="mr-2 h-4 w-4" />
           Impor dari Excel
         </Button>
