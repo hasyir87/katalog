@@ -9,12 +9,10 @@ import type { Perfume } from "@/lib/types";
 export default async function DashboardPage({ 
     searchParams
 }: {
-    searchParams?: {
-        q?: string;
-    }
+    searchParams?: { [key: string]: string | string[] | undefined };
 }) {
 
-    const query = searchParams?.q || "";
+    const query = typeof searchParams?.q === 'string' ? searchParams.q : '';
     const perfumes: Perfume[] = await getAllPerfumes(query);
 
     // Tambahkan nomor urut ke setiap objek parfum

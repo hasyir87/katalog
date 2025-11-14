@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, Dispatch, SetStateAction } from 'react';
+import { useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
-import type { ColumnDef, SortingState, VisibilityState, RowSelectionState, OnChangeFn } from '@tanstack/react-table';
+import type { ColumnDef, SortingState, VisibilityState, RowSelectionState, OnChangeFn, ColumnFiltersState } from '@tanstack/react-table';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -38,8 +38,11 @@ export function DataTable<TData extends BaseData, TValue>({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: 'namaParfum', desc: false } // Default sort
+  ]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const table = useReactTable({
     data,
@@ -48,20 +51,22 @@ export function DataTable<TData extends BaseData, TValue>({
       sorting,
       columnVisibility,
       rowSelection,
+      columnFilters,
     },
     onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    manualFiltering: true, 
+    manualFiltering: true, // Karena filter sekarang di server
     getRowId: (row) => row.id, // Memberi tahu tabel cara mendapatkan ID baris
   });
 
   const handleSearch = useDebouncedCallback((term: string) => {
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams(searchParams.toString());
     if (term) {
       params.set('q', term);
     } else {
@@ -74,7 +79,7 @@ export function DataTable<TData extends BaseData, TValue>({
     <div className="space-y-4 h-full flex flex-col">
         <div className="flex items-center justify-between flex-shrink-0">
             <Input
-              placeholder="Cari berdasarkan nama parfum..."
+              placeholder="Cari parfum..."
               defaultValue={searchParams.get('q') || ''}
               onChange={(e) => handleSearch(e.target.value)}
               className="max-w-sm"
