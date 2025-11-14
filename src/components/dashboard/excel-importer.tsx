@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -17,11 +16,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Loader2, FileCheck2, AlertCircle } from 'lucide-react';
+import { UploadCloud, Loader2, FileCheck2 } from 'lucide-react';
 import { addPerfumesBatch } from '@/lib/actions';
 import { ScrollArea } from '../ui/scroll-area';
 
-export function ExcelImporter() {
+interface ExcelImporterProps {
+  onUploadSuccess: () => void;
+}
+
+export function ExcelImporter({ onUploadSuccess }: ExcelImporterProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -88,7 +91,6 @@ export function ExcelImporter() {
 
     setIsImporting(true);
     try {
-      // Sanitize the data to ensure it's plain objects before sending to server action
       const plainData = JSON.parse(JSON.stringify(parsedData));
       const result = await addPerfumesBatch(plainData);
       
@@ -117,6 +119,9 @@ export function ExcelImporter() {
             action: <div className="p-2 rounded-full bg-green-500"><FileCheck2 className="h-5 w-5 text-white" /></div>
          });
       }
+      // Panggil callback setelah sukses
+      onUploadSuccess();
+
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -126,8 +131,7 @@ export function ExcelImporter() {
     } finally {
       setIsImporting(false);
       setOpen(false);
-      setFile(null);
-      setParsedData([]);
+      resetState();
     }
   };
 
@@ -144,7 +148,7 @@ export function ExcelImporter() {
         if (!isOpen) resetState();
     }}>
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant="outline" size="sm"> {/* Menambahkan size=sm */}
           <UploadCloud className="mr-2 h-4 w-4" />
           Impor dari Excel
         </Button>

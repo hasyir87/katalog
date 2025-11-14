@@ -1,138 +1,124 @@
 'use client';
 
-import * as React from 'react';
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  useReactTable,
-  type SortingState,
-  type ColumnFiltersState,
-  type RowSelectionState,
-  type GlobalFilterTableState,
-} from '@tanstack/react-table';
+import { useState, Dispatch, SetStateAction } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
+import type { ColumnDef, SortingState, VisibilityState, RowSelectionState, OnChangeFn } from '@tanstack/react-table';
+import { useDebouncedCallback } from 'use-debounce';
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
-import type { Perfume } from '@/lib/types';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DataTablePagination } from '@/components/ui/data-table/data-table-pagination';
+import { DataTableViewOptions } from '@/components/ui/data-table/data-table-view-options';
+import { Input } from "@/components/ui/input"
 
-
-interface DataTableProps<TData extends Perfume, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-  onRowClick: (row: TData) => void;
-  selectedPerfumeId?: string | null;
-  rowSelection: RowSelectionState;
-  setRowSelection: React.Dispatch<React.SetStateAction<RowSelectionState>>;
+// Menambahkan batasan generik untuk memastikan data memiliki properti `id`
+interface BaseData {
+    id: string;
 }
 
-export function DataTable<TData extends Perfume, TValue>({
+interface DataTableProps<TData extends BaseData, TValue> {
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
+  onRowClick: (data: TData) => void;
+  selectedPerfumeId?: string | null;
+  rowSelection: RowSelectionState;
+  // Menggunakan tipe yang benar dari @tanstack/react-table
+  setRowSelection: OnChangeFn<RowSelectionState>; 
+}
+
+export function DataTable<TData extends BaseData, TValue>({
   columns,
   data,
   onRowClick,
   selectedPerfumeId,
   rowSelection,
-  setRowSelection,
+  setRowSelection
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([
-    { id: 'namaParfum', desc: false },
-  ]);
-  const [globalFilter, setGlobalFilter] = React.useState('');
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   const table = useReactTable({
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    onGlobalFilterChange: setGlobalFilter,
-    getFilteredRowModel: getFilteredRowModel(),
-    onRowSelectionChange: setRowSelection,
-    getRowId: (row) => row.id, // Important for selection state to work correctly
     state: {
       sorting,
-      globalFilter,
+      columnVisibility,
       rowSelection,
     },
+    onSortingChange: setSorting,
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    manualFiltering: true, 
+    getRowId: (row) => row.id, // Memberi tahu tabel cara mendapatkan ID baris
   });
 
+  const handleSearch = useDebouncedCallback((term: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (term) {
+      params.set('q', term);
+    } else {
+      params.delete('q');
+    }
+    router.replace(`${pathname}?${params.toString()}`);
+  }, 300);
+
   return (
-    <div className="h-full flex flex-col">
-        <div className="flex items-center py-4">
+    <div className="space-y-4 h-full flex flex-col">
+        <div className="flex items-center justify-between flex-shrink-0">
             <Input
-            placeholder="Search all columns..."
-            value={globalFilter ?? ''}
-            onChange={(event) =>
-                setGlobalFilter(event.target.value)
-            }
-            className="max-w-sm"
+              placeholder="Cari berdasarkan nama parfum..."
+              defaultValue={searchParams.get('q') || ''}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="max-w-sm"
             />
+           <DataTableViewOptions table={table} />
         </div>
-      <div className="rounded-md border flex-grow overflow-y-auto relative">
+      <div className="rounded-md border flex-grow overflow-auto">
         <Table>
-          <TableHeader className="sticky top-0 bg-background z-10">
-            {table.getHeaderGroups().map(headerGroup => (
+          <TableHeader className="sticky top-0 bg-background">
+            {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map(header => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id} colSpan={header.colSpan}>
+                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map(row => (
+              table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() || row.original.id === selectedPerfumeId ? 'selected' : ''}
+                  data-state={row.getIsSelected() && 'selected'}
                   onClick={() => onRowClick(row.original)}
-                  className={cn(
-                    "cursor-pointer",
-                     row.original.id === selectedPerfumeId && "bg-primary/10 hover:bg-primary/20",
-                     row.getIsSelected() && "bg-muted hover:bg-muted/80"
-                  )}
-                >
-                  {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id} className="py-2 px-4">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
+                  className={`cursor-pointer ${row.original.id === selectedPerfumeId ? 'bg-muted/50' : ''}`}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  Tidak ada hasil.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
+      </div>
+      <div className="flex-shrink-0">
+        <DataTablePagination table={table} />
       </div>
     </div>
   );
