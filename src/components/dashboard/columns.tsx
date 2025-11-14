@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Perfume } from '@/lib/types';
@@ -5,7 +6,7 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash } from 'lucide-react';
+import { Pencil, Trash, QrCode } from 'lucide-react';
 import Link from 'next/link';
 import { deletePerfume } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
@@ -13,6 +14,7 @@ import { QrCodeModal } from './qr-code-modal';
 
 // Fungsi untuk menangani penghapusan parfum
 const handleDelete = async (id: string, name: string) => {
+  const { toast } = useToast();
   const confirmed = confirm(`Apakah Anda yakin ingin menghapus parfum "${name}"?`);
   if (confirmed) {
     try {
@@ -49,8 +51,12 @@ export const columns: ColumnDef<Perfume>[] = [
   {
     id: 'number',
     header: ({ column }) => <DataTableColumnHeader column={column} title="No" />,
-    cell: ({ row }) => <div className="w-[30px]">{row.index + 1}</div>,
-    enableSorting: false, // Sorting by display index doesn't make sense
+    cell: ({ row, table }) => {
+        const sortedRowModel = table.getSortedRowModel().rows;
+        const rowIndex = sortedRowModel.findIndex(sortedRow => sortedRow.id === row.id);
+        return <div className="w-[30px]">{rowIndex + 1}</div>;
+    },
+    enableSorting: false, // Explicitly disable sorting on this column
   },
   {
     accessorKey: 'namaParfum',
