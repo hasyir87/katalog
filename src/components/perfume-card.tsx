@@ -14,9 +14,11 @@ export function PerfumeCard({ perfume }: PerfumeCardProps) {
   return (
     <Link href={`/perfume/${perfume.id}`} className="group">
       <Card className="h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-card">
-        <CardHeader className="p-6 pb-4 flex flex-row items-start justify-between">
-          <CardTitle className="font-headline text-2xl leading-tight mb-2 flex-1">{perfume.namaParfum}</CardTitle>
-           <Badge variant="secondary">{perfume.jenisAroma}</Badge>
+        <CardHeader className="p-6 pb-4">
+          <div>
+            <CardTitle className="font-headline text-2xl leading-tight mb-2">{perfume.namaParfum}</CardTitle>
+            <Badge variant="secondary">{perfume.jenisAroma}</Badge>
+          </div>
         </CardHeader>
         <CardContent className="p-6 pt-0 flex-grow flex flex-col justify-between">
             <div>
