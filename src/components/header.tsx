@@ -105,14 +105,7 @@ export function Header() {
                     </DropdownMenuContent>
                     </DropdownMenu>
                 ) : (
-                    <div className="space-x-2">
-                        <Button asChild variant="secondary">
-                            <Link href="/register">Sign Up</Link>
-                        </Button>
-                        <Button asChild>
-                            <Link href="/login">Sign In</Link>
-                        </Button>
-                    </div>
+                    null // Tombol Sign In / Sign Up dihapus
                 )}
             </div>
         </div>
