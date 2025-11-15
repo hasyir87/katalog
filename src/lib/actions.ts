@@ -19,6 +19,41 @@ const perfumeSchema = z.object({
     lokasi: z.string().optional(),
 });
 
+// Fungsi untuk mendapatkan semua parfum, dengan fungsionalitas pencarian
+export async function getAllPerfumes(searchQuery: string = ''): Promise<Perfume[]> {
+    try {
+        const db = await getDb();
+        const perfumesRef = db.collection('perfumes');
+        
+        const querySnapshot = await perfumesRef.orderBy('namaParfum', 'asc').get();
+
+        const allPerfumes = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        } as Perfume));
+
+        if (!searchQuery) {
+            return allPerfumes;
+        }
+
+        const lowercasedQuery = searchQuery.toLowerCase();
+        return allPerfumes.filter(perfume => {
+            return (
+              perfume.namaParfum.toLowerCase().includes(lowercasedQuery) ||
+              perfume.jenisAroma.toLowerCase().includes(lowercasedQuery) ||
+              perfume.deskripsiParfum.toLowerCase().includes(lowercasedQuery) ||
+              perfume.kualitas.toLowerCase().includes(lowercasedQuery) ||
+              perfume.sex.toLowerCase().includes(lowercasedQuery)
+            );
+        });
+
+    } catch (error) {
+        console.error("Error getting all perfumes: ", error);
+        // In case of error, return an empty array to prevent the app from crashing.
+        return [];
+    }
+}
+
 // Fungsi untuk mendapatkan satu parfum berdasarkan ID
 export async function getPerfumeById(id: string): Promise<Perfume | null> {
     try {
@@ -42,16 +77,15 @@ export async function addPerfume(data: unknown) {
 
     const validation = perfumeSchema.safeParse(data);
     if (!validation.success) {
-        return { success: false, errors: validation.error.flatten().fieldErrors };
+        throw new Error(validation.error.message);
     }
 
     try {
         await db.collection('perfumes').add(validation.data);
         revalidatePath("/dashboard");
-        return { success: true };
     } catch (error) {
         console.error("Error adding perfume: ", error);
-        return { success: false, errors: { _server: ["Gagal menambahkan parfum. Silakan coba lagi."] } };
+        throw new Error('Could not add perfume.');
     }
 }
 
@@ -61,7 +95,7 @@ export async function updatePerfume(id: string, data: unknown) {
     
     const validation = perfumeSchema.safeParse(data);
     if (!validation.success) {
-        return { success: false, errors: validation.error.flatten().fieldErrors };
+        throw new Error(validation.error.message);
     }
 
     try {
@@ -70,10 +104,9 @@ export async function updatePerfume(id: string, data: unknown) {
         revalidatePath("/dashboard");
         revalidatePath(`/dashboard/edit/${id}`);
         revalidatePath(`/perfume/${id}`);
-        return { success: true };
     } catch (error) {
         console.error(`Error updating perfume (${id}): `, error);
-        return { success: false, errors: { _server: ["Gagal mengupdate parfum. Silakan coba lagi."] } };
+        throw new Error('Could not update perfume.');
     }
 }
 

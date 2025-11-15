@@ -36,7 +36,7 @@ export default function Home() {
     <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
       {/* Judul Halaman */}
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl font-headline">
           {searchQuery ? `Hasil Pencarian untuk "${searchQuery}"` : "Jelajahi Katalog Kami"}
         </h1>
         <p className="mt-3 max-w-2xl mx-auto text-lg text-muted-foreground sm:mt-4">
