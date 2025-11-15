@@ -64,6 +64,11 @@ export const columns: ColumnDef<Perfume>[] = [
     cell: ({ row }) => <div>{row.getValue('namaParfum')}</div>,
   },
   {
+    accessorKey: 'sex',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Sex" />,
+    cell: ({ row }) => <div>{row.getValue('sex')}</div>,
+  },
+  {
     accessorKey: 'kualitas',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Kualitas" />,
     cell: ({ row }) => <div>{row.getValue('kualitas')}</div>,

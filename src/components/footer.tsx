@@ -9,7 +9,7 @@ export function Footer() {
           </Link>
         </div>
         <p className="text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} M Katalog Parfum. Semua hak dilindungi.
+            © {new Date().getFullYear()} M Katalog Parfum.
         </p>
       </div>
     </footer>

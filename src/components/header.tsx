@@ -62,10 +62,10 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-20 items-center gap-4">
         <Link href="/" className="mr-6 flex items-center space-x-2">
-           <img src="/logo.png" alt="M Katalog Parfum Logo" width={40} height={40} />
+           <img src="https://www.appsheet.com/fsimage.png?appid=520d6c78-d578-4f8d-b624-bcf5f410200a&datasource=google&filename=DocId%3D19N_zKCUdC-CdWuSuAqIZJSZu1ZSionEB&signature=b67bc4a36c7849fccc9ab5be4d965e0266e059d03ca5c60a52e5c1ebaf29a5e0&tableprovider=google&userid=1643435" alt="M Katalog Parfum Logo" width={40} height={40} />
            <span className="font-bold font-headline text-xl hidden sm:inline-block">M Katalog Parfum</span>
         </Link>
-        
+         
         <div className="flex w-full flex-1 items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
             <SearchBar />
             <div className="ml-auto flex-shrink-0">

@@ -65,7 +65,7 @@ export function PerfumeDetailsClient({ perfume }: PerfumeDetailsClientProps) {
               <CardTitle className="text-lg font-headline">QR Code</CardTitle>
            </CardHeader>
            <CardContent className="flex flex-col items-center gap-4">
-              <p className="text-sm text-center text-muted-foreground">Scan to discover more perfumes with the <span className="font-bold text-foreground">{perfume.jenisAroma}</span> scent profile.</p>
+              <p className="text-sm text-center text-muted-foreground">Scan to discover more perfumes with the <span className="font-bold text-foreground">{perfume.namaParfum}</span> scent profile.</p>
               <QrCodeDisplay scentType={perfume.jenisAroma} />
            </CardContent>
         </Card>
