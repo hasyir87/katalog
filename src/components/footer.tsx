@@ -1,15 +1,19 @@
-import Link from 'next/link';
+'use client';
+
+import Link from "next/link";
+
 export function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="border-t">
-      <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
-        <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
-          <Link href="/" className="flex items-center space-x-2">
-             <span className="font-bold">M Katalog Parfum</span>
+    <footer className="border-t bg-background/80 backdrop-blur-sm">
+      <div className="container flex h-16 items-center justify-center">
+        <p className="text-sm text-muted-foreground">
+          &copy; {currentYear}{ ' ' }
+          <Link href="/" className="font-medium hover:text-primary">
+            M Katalog Parfum
           </Link>
-        </div>
-        <p className="text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} M Katalog Parfum.
+          . All rights reserved.
         </p>
       </div>
     </footer>
