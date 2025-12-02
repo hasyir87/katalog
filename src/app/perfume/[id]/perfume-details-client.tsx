@@ -1,76 +1,126 @@
 
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { QrCodeDisplay } from '@/components/qr-code-display';
-import type { Perfume } from '@/lib/types';
-import { Droplets, Flower, Building, User, Clock, Sparkle, Milestone, ArrowLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import QRCode from 'react-qr-code';
+import { ArrowLeft, Users, Star, Leaf } from 'lucide-react';
+import type { Perfume } from '@/lib/types';
+import { getAllPerfumes } from '@/lib/actions';
+import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
-interface PerfumeDetailsClientProps {
-    perfume: Perfume;
-}
+// Helper component for displaying a detail row
+const AromaNote = ({ label, value }: { label: string; value: string | undefined; }) => (
+    <div>
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <p className="font-semibold">{value || 'N/A'}</p>
+    </div>
+);
 
-export function PerfumeDetailsClient({ perfume }: PerfumeDetailsClientProps) {
-  const router = useRouter();
+export const PerfumeDetailsClient = ({ perfumeId }: { perfumeId: string }) => {
+  const [perfume, setPerfume] = useState<Perfume | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const details = [
-    { icon: Droplets, label: "Top Notes", value: perfume.topNotes },
-    { icon: Flower, label: "Middle Notes", value: perfume.middleNotes },
-    { icon: Milestone, label: "Base Notes", value: perfume.baseNotes },
-    { icon: User, label: "Sex", value: perfume.sex === 'Male' ? 'Pria' : perfume.sex === 'Female' ? 'Wanita' : 'Unisex' },
-    { icon: Clock, label: "Penggunaan", value: perfume.penggunaan },
-    { icon: Building, label: "Lokasi", value: perfume.lokasi },
-    { icon: Sparkle, label: "Kualitas", value: perfume.kualitas },
-  ];
+  useEffect(() => {
+    const fetchPerfume = async () => {
+      try {
+        setLoading(true);
+        const allPerfumes = await getAllPerfumes(''); 
+        const foundPerfume = allPerfumes.find(p => p.id === perfumeId);
+
+        if (foundPerfume) {
+          setPerfume(foundPerfume);
+        } else {
+          setError('Parfum tidak ditemukan.');
+        }
+      } catch (e: any) {
+        setError('Gagal mengambil data parfum.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPerfume();
+  }, [perfumeId]);
+
+  const publicUrl = typeof window !== 'undefined' 
+    ? `${window.location.origin}/perfume/${perfumeId}`
+    : '';
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Memuat detail parfum...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center text-red-500">Error: {error}</div>;
+  }
+  
+  if (!perfume) {
+      return <div className="text-center">Parfum tidak ditemukan.</div>;
+  }
 
   return (
-    <div className="grid md:grid-cols-[1fr_250px] gap-8 lg:gap-12 items-start">
-      <div className="space-y-6">
-        <Button variant="outline" onClick={() => router.back()} className="mb-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Kembali
-        </Button>
-        <div className="space-y-2">
-            <h1 className="text-4xl lg:text-5xl font-bold font-headline tracking-tight text-primary">
-            {perfume.namaParfum}
-            </h1>
-            <Badge variant="secondary">{perfume.jenisAroma}</Badge>
+    <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-10">
+             <div className="mb-8">
+                <Link href="/search">
+                    <Button variant="outline" size="sm">
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Kembali ke Katalog
+                    </Button>
+                </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-12">
+                {/* Left Column: Perfume Information */}
+                <div className="md:col-span-3">
+                    <div className="space-y-6">
+                        <div>
+                             <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">{perfume.namaParfum}</h1>
+                            <p className="mt-4 text-lg text-muted-foreground">{perfume.deskripsiParfum || 'Deskripsi tidak tersedia.'}</p>
+                        </div>
+
+                        <div className="flex flex-wrap gap-3">
+                            <Badge variant="default" className="text-sm py-1 px-3"><Users className="h-4 w-4 mr-2"/> {perfume.sex}</Badge>
+                            <Badge variant="default" className="text-sm py-1 px-3"><Star className="h-4 w-4 mr-2"/> {perfume.kualitas}</Badge>
+                            <Badge variant="default" className="text-sm py-1 px-3"><Leaf className="h-4 w-4 mr-2"/> {perfume.jenisAroma}</Badge>
+                        </div>
+
+                        <Separator className="my-6" />
+
+                        <div>
+                            <h3 className="text-2xl font-semibold mb-4">Komposisi Aroma</h3>
+                            <div className="grid grid-cols-3 gap-4">
+                                <AromaNote label="Top Notes" value={perfume.topNotes} />
+                                <AromaNote label="Middle Notes" value={perfume.middleNotes} />
+                                <AromaNote label="Base Notes" value={perfume.baseNotes} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Column: QR Code Visual */}
+                <div className="md:col-span-2">
+                    <div className="sticky top-28 p-8 border rounded-xl bg-card shadow-sm flex flex-col items-center justify-center">
+                         <h2 className="text-xl font-bold mb-4">Scan & Share</h2>
+                         <div className="p-4 bg-white rounded-lg">
+                             <QRCode
+                                value={publicUrl}
+                                size={200}
+                                style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
+                                viewBox={`0 0 256 256`}
+                            />
+                        </div>
+                        <p className="text-xs text-muted-foreground break-all mt-4 text-center">
+                            {publicUrl}
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
-        <p className="text-lg text-muted-foreground">
-          {perfume.deskripsiParfum}
-        </p>
-        <Separator />
-        <div className="grid gap-4">
-          <h3 className="text-xl font-semibold font-headline">Details</h3>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-              {details.map(detail => (
-                  <li key={detail.label} className="flex items-start">
-                      <detail.icon className="h-5 w-5 mr-3 mt-1 text-primary shrink-0" />
-                      <div>
-                          <span className="font-semibold text-sm">{detail.label}</span>
-                          <p className="text-muted-foreground">{detail.value}</p>
-                      </div>
-                  </li>
-              ))}
-          </ul>
-        </div>
-      </div>
-       <div className="flex flex-col items-center gap-6 sticky top-24">
-        <Card className="w-full max-w-sm">
-           <CardHeader className="text-center">
-              <CardTitle className="text-lg font-headline">QR Code</CardTitle>
-           </CardHeader>
-           <CardContent className="flex flex-col items-center gap-4">
-              <p className="text-sm text-center text-muted-foreground">Scan to discover more perfumes with the <span className="font-bold text-foreground">{perfume.namaParfum}</span> scent profile.</p>
-              <QrCodeDisplay scentType={perfume.jenisAroma} />
-           </CardContent>
-        </Card>
-      </div>
     </div>
   );
-}
-
+};
