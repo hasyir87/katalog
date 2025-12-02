@@ -85,7 +85,6 @@ export const PerfumeDetailsClient = ({ perfumeId }: { perfumeId: string }) => {
 
                         <div className="flex flex-wrap gap-3">
                             <Badge variant="default" className="text-sm py-1 px-3"><Users className="h-4 w-4 mr-2"/> {perfume.sex}</Badge>
-                            <Badge variant="default" className="text-sm py-1 px-3"><Star className="h-4 w-4 mr-2"/> {perfume.kualitas}</Badge>
                             <Badge variant="default" className="text-sm py-1 px-3"><Leaf className="h-4 w-4 mr-2"/> {perfume.jenisAroma}</Badge>
                         </div>
 
