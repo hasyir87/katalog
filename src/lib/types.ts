@@ -9,6 +9,5 @@ export type Perfume = {
   sex: 'Male' | 'Female' | 'Unisex';
   lokasi: string;
   jenisAroma: string;
-  kualitas: 'Premium' | 'Extrait';
   number?: number;
 };

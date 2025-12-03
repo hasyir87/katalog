@@ -1,4 +1,4 @@
-
+ 
 'use client';
 
 import type { Perfume } from '@/lib/types';
@@ -67,11 +67,6 @@ export const columns: ColumnDef<Perfume>[] = [
     accessorKey: 'sex',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Sex" />,
     cell: ({ row }) => <div>{row.getValue('sex')}</div>,
-  },
-  {
-    accessorKey: 'kualitas',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Kualitas" />,
-    cell: ({ row }) => <div>{row.getValue('kualitas')}</div>,
   },
   {
     accessorKey: 'jenisAroma',
